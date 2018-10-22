@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+
+log_file=graft.log
+prev_log_pfx=.prev
+
+echo $log_file
+echo $prev_log_pfx
+
+shutdown_graft()
+{
+  max_kill_attempt=3
+  kill_try=0
+  while pgrep tmuxs;
+  do
+    sleep 1
+    echo 'pkill graft'
+    if (($kill_try++ > $max_kill_attempt));
+    then
+      echo 'too much failed attempts ...'
+      exit -1
+    else
+      echo 'wating ...'
+    fi
+  done
+}
+
+rename_old_log()
+{
+  if [ -f $log_file ] && [ -s $log_file ]; then
+    shutdown_graft
+    mv $log_file{,$prev_log_pfx}
+  else
+    echo 'no log file found ...'
+  fi
+}
+
+md()
+{
+  mkdir -p $1
+}
+
+backup_old_and_new_log()
+{
+  arc_name=$1
+  if [ $arc_name ] && [ -f $log_file ]; then
+    shutdown_graft
+    echo 'func-2' , "$arc_name"
+    md $arc_name
+    if [ -f $log_file ]; then
+      mv $log_file $arc_name
+
+      if [ -f $log_file$prev_log_pfx ]; then
+        mv $log_file$prev_log_pfx $arc_name
+      fi
+      tar cJf $arc_name.txz $arc_name
+      rm -rf ./$arc_name
+    fi
+  else
+    echo 'input data is not enough ...'
+    exit -1
+  fi
+}
+
+if (( $# > 0 ));
+then
+  cd $2
+  touch ./pt-remote-ctl-log
+
+  case $1 in
+    '--rnm-old-log')
+      rename_old_log
+      ;;
+    '--bkp-log')
+      backup_old_and_new_log $3
+      ;;
+    *)
+      exit -1
+  esac
+fi
+
+
+

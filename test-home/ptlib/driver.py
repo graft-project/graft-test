@@ -1,0 +1,842 @@
+#!/usr/bin/env python3
+
+import os
+import argparse
+import json
+import logging
+import requests
+import shelve
+import time
+import datetime
+import subprocess
+from .ssh_ctl import SSHClient
+from typing import NamedTuple
+
+class Host(NamedTuple):
+    name: str
+    ip: str
+    user: str
+    wallet: str
+    port_nrpc: int
+
+env_file = 'env.json'
+
+def load_environment_description(path):
+    full_env = os.path.join(path, env_file)
+
+    if not os.path.exists(full_env):
+        sys.exit('File with environment description [{}] not found'.format(full_env))
+
+    if not os.path.isfile(full_env):
+        sys.exit('[{}] is not a file - cannot be read'.format(full_env))
+
+    env_desc = []
+    with open(full_env) as jf:
+        js = jf.read()
+        jo = json.loads(js)
+        for obj in jo:
+           env_desc.append(Host(**obj))
+
+    print('env-desc [{}] loaded, cnt:{}'.format(full_env, len(env_desc)))
+    return env_desc
+
+def load_env_descr_by_current_conftest(curr_conftest):
+    curr_path = os.path.dirname(os.path.realpath(curr_conftest))
+    return load_environment_description(curr_path)
+
+#########################################################################################
+
+def drv_name():
+    return 'main graft test driver'
+
+
+#  Ports
+#    8081 - block explorer port
+#  286 00 - load balancer http port
+#  286 43 - load balancer https port
+#  286 80 - p2p node port
+#  286 81 - rpc node port
+#  286 90 - rpc supernode port
+
+#class Car(NamedTuple):
+#    color: str
+#    mileage: float
+#    automatic: bool
+
+class RequestTemplate():
+    announce = {
+                  "jsonrpc":"2.0",
+                  "method":"send_supernode_announce",
+                  "id":0,
+                  "params":{
+                      "signed_key_images":[
+                        {
+                          "key_image":"f219e6151c84",
+                          "signature":"f88d136f02683407b0bff9a1473761"
+                        }
+                      ],
+                      "timestamp":1530799007,
+                      "address":"F4KrqowwEoY6K9J8dV75toToyYYmHdMbkWgFCm4A9uMhND3uGtnMFU4gAGLBVYFEbz2zC9jrVvCS96x3HUcy6nAd4q4Robb",
+                      "stake_amount":53370100000000000,
+                      "height":114374,
+                      "secret_viewkey":"5ee2b4d62214d4ae3385c80e4485cb7547690144c3bbddf31fd75351900a8b0e",
+                      "network_address":"54.226.23.229:28690/dapi/v2.0"
+                  }
+                }
+
+    broadcast = {
+                  "json_rpc" : "2.0",
+                  "method" : "broadcast",
+                  "id" : "0",
+                  "params": {
+                    "sender_address" : "",
+                    "callback_uri" : "",
+                    "data" : ""
+                  }
+                }
+
+    multicast = {
+                  "json_rpc" : "2.0",
+                  "method" : "multicast",
+                  "id" : "0",
+                  "params": {
+                    "receiver_addresses" : [ "address1", "address2" ],
+                    "sender_address" : "",
+                    "callback_uri" : "",
+                    "data" : ""
+                  }
+                }
+
+    unicast = {
+                "jsonrpc":"2.0",
+                "id":"0",
+                "method":"unicast",
+                "params": {
+                  "sender_address":"F8C3ZSW9XFHJuz78vqJiFo3S5bnMug8nA8QziJ5YgJtHcFXZZ9QYmXQVut6CkMhoLwXeuhcFdeDUm8dxBKgLRbG7RcA7Fvq",
+                  "receiver_address":"FAemK2QsWwsDAxgCKsTJUbhk1XwAu1eg4eVkYNbYSkQzLP8wobvgG7ia1tXcpSY6k4f7rFmypq6wHKT4fYJJ3XFL1KRgNrj",
+                  "callback_uri":"",
+                  "data":"eyJQYXltZW50SUQiOiI2MGU2YTYyMC04NWE2LTQ3OGQtODAyZC02ZGIwNzEzNzQwMWYiLCJCbG9ja051bWJlciI6MTc2MX0=",
+                  "wait_answer": False
+                }
+              }
+
+
+gn00 = 'gn00'
+gn01 = 'gn01'
+gn02 = 'gn02'
+gn03 = 'gn03'
+
+gn0X_user = 'ubuntu'
+
+ip_n0 = "18.206.213.77"
+ip_n1 = "54.226.23.229"
+ip_n2 = "54.197.32.149"
+ip_n3 = "52.90.236.226"
+
+ip_n0_local = "172.31.31.68"
+ip_n1_local = "172.31.18.232"
+ip_n2_local = "172.31.29.186"
+ip_n3_local = "172.31.31.22"
+
+ip_any_local = '0.0.0.0'
+
+port_nrpc = 28681
+port_srpc = 28690
+
+port_srpc1 = 28691
+port_srpc2 = 28692
+port_srpc3 = 28693
+
+wa0 = ""
+wa1 = "F4KrqowwEoY6K9J8dV75toToyYYmHdMbkWgFCm4A9uMhND3uGtnMFU4gAGLBVYFEbz2zC9jrVvCS96x3HUcy6nAd4q4Robb"
+wa2 = "F43mWaMKqTM5uhxG2kjyrRS9QBEGYS9PmbEUBYQjkEd51U9ThEeKvjDFYxr7pSkd5WLZKLj7Go1FsEP2uLY8RrCTPnnnJ7n"
+wa3 = "F5ciEZFQzy7Ln4QDtqR4d415ih6gBHtb8CY8gPDF97iiKwRfGmLZ5yJMGYtKvDZaWDVng4pjpdN9eY9c3vkA8a44Km89Wfx"
+
+host0 = Host(gn00, ip_n0, gn0X_user, wa0, port_nrpc)
+host1 = Host(gn01, ip_n1, gn0X_user, wa1, port_nrpc)
+host2 = Host(gn02, ip_n2, gn0X_user, wa2, port_nrpc)
+host3 = Host(gn03, ip_n3, gn0X_user, wa3, port_nrpc)
+
+cmd_grep_graft = 'ps aux | grep -v grep | grep graft'
+cmd_kill_graft = 'pkill graft'
+
+cmd_node_down = cmd_kill_graft
+cmd_node_1_down = cmd_kill_graft
+cmd_node_2_down = cmd_kill_graft
+cmd_node_3_down = cmd_kill_graft
+
+persist_storage_name = 'persistent-storage-uuid'
+persist_key_timestamp = 'timestamp'
+
+logging.basicConfig(format = '%(message)s', level = logging.INFO)
+log = logging.getLogger(__name__)
+
+cmd_grep_graft = 'ps aux | grep -v grep | grep graft'
+cmd_kill_graft = 'pkill graft'
+
+run_ctx = {'faked-timestamp': 0}
+
+def mk_full_file_name_from_local_name(file_name):
+    path = os.path.dirname(os.path.realpath(__file__))
+    return os.path.join(path, file_name)
+
+def get_test_name(test_file_name):
+    test_name_pfx = 'test_'
+    return test_file_name[len(test_name_pfx):] if test_file_name.startswith(test_name_pfx) else test_file_name
+
+#def load_initial_timestamp_from_json():
+#    json_file = os.path.join(os.path.realpath(__file__), announce_json_file)
+#    with open(json_file) as jf:
+#        js = jf.read()
+#        jo = json.loads(js)
+#        ts = jo['params']['timestamp']
+#        log.info('New timestamp value loaded from json-file: {}'.format(ts))
+#        return ts
+
+def exec_ssh_cmd(cmd, host):
+    with SSHClient(host) as sc:
+        return sc.exec_ssh_cmd(cmd)
+
+def get_next_timestamp():
+    with shelve.open(persist_storage_name) as db:
+        if not persist_key_timestamp in db:
+            db[persist_key_timestamp] = load_initial_timestamp_from_json()
+
+        ts = db[persist_key_timestamp]
+        db[persist_key_timestamp] += 1
+    return ts
+
+def get_current_timestamp():
+    return int(time.time())
+
+def get_faked_timestamp():
+    if not run_ctx['faked-timestamp']:
+        run_ctx['faked-timestamp'] = get_current_timestamp()
+    run_ctx['faked-timestamp'] += 1
+    return run_ctx['faked-timestamp']
+
+def get_hires_timestamp():
+    return str(time.perf_counter()).replace('.','')
+
+def mk_shell_param_exclusive_node_list(host):
+    available_hosts = [ host1, host2, host3 ]
+    param_name = '--add-exclusive-node '
+    nl = ''
+    for h in available_hosts:
+        if h.name == host.name:
+            continue
+        if nl:
+            nl += ' '
+        nl += param_name + h.ip
+    return nl
+
+def mk_shell_cmd_for_start_graftnoded(host):
+    full_file_name = '/home/{}/projects/graft/bin/graftnoded'.format(host.user)
+    cmd_params = '--testnet --log-level 1 --testnet-rpc-bind-port {} --rpc-bind-ip {} --confirm-external-bind --detach'.format(port_nrpc, ip_any_local)
+    return '{} {} {}'.format(full_file_name, cmd_params, mk_shell_param_exclusive_node_list(host))
+
+def mk_node_rpc_url(ip_addr, port):
+    return 'http://' + ip_addr + ':' + str(port) + '/json_rpc'
+
+def mk_node_rpc_rta_url(ip_addr, port):
+    return 'http://' + ip_addr + ':' + str(port) + '/json_rpc/rta'
+
+def mk_node_rpc_rta_url_by_host(host):
+    return mk_node_rpc_rta_url(host.ip, port_nrpc)
+    #return 'http://' + host.ip + ':' + str(port) + '/json_rpc/rta'
+
+def mk_netw_addr(ip_addr, port):
+    return ip_addr + ':' + str(port) + '/dapi/v2.0'
+#"network_address":"54.226.23.229:28690/dapi/v2.0"
+
+def mk_full_file_name_from_local_name(file_name):
+    path = os.path.dirname(os.path.realpath(__file__))
+    return os.path.join(path, file_name)
+
+def mk_unicast_request(src, dst):
+    jo = json.loads(json.dumps(RequestTemplate.unicast))
+    jo['params']['sender_address'] = src.wallet
+    jo['params']['receiver_address'] = dst.wallet
+    jo['params']['data'] = '{}:{}'.format(src.ip, get_hires_timestamp())
+
+    url = mk_node_rpc_rta_url_by_host(src)
+    hdrs = {'Content-Type':'application/json'}
+    return url, jo, hdrs
+
+def mk_broadcast_request(src):
+    jo = json.loads(json.dumps(RequestTemplate.broadcast))
+    jo['params']['sender_address'] = src.wallet
+    jo['params']['data'] = '{}:{}'.format(src.ip, get_hires_timestamp())
+
+    url = mk_node_rpc_rta_url_by_host(src)
+    hdrs = {'Content-Type':'application/json'}
+    return url, jo, hdrs
+
+def mk_multicast_request(src, dst_list):
+    jo = json.loads(json.dumps(RequestTemplate.multicast))
+    jo['params']['sender_address'] = src.wallet
+    jo['params']['data'] = '{}:{}'.format(src.ip, get_hires_timestamp())
+
+    dst_wallets = []
+    for h in dst_list:
+      dst_wallets.append(h.wallet)
+    jo['params']['receiver_addresses'] = dst_wallets
+
+    url = mk_node_rpc_rta_url_by_host(src)
+    hdrs = {'Content-Type':'application/json'}
+    return url, jo, hdrs
+
+def inc_timestamp(json_obj):
+    json_obj['params']['timestamp'] = get_next_timestamp()
+
+def set_timestamp(json_obj):
+    #json_obj['params']['timestamp'] = get_current_timestamp()
+    json_obj['params']['timestamp'] = get_faked_timestamp()
+
+def adj_snode_netw_addr(json_obj, snode_ip, snode_port):
+    json_obj['params']['network_address'] = mk_netw_addr(snode_ip, snode_port)
+
+def one_request(addr, port):
+    log.info('listening for a request on port {}...'.format(port))
+
+    class RequestHandler(BaseHTTPRequestHandler):
+        #def do_GET(self):
+        #    health = {'status': 'ok'}
+        #    self.send_response(200)
+        #    self.send_header('Content-Type', 'application/json')
+        #    self.end_headers()
+        #    self.wfile.write(bytes(json.dumps(health), 'UTF-8'))
+
+        def do_POST(self):
+            log.info('POST arrived from {}, path: {}'.format(self.address_string(), self.path))
+
+    httpd = HTTPServer((addr, port), RequestHandler)
+    httpd.handle_request()
+    httpd.server_close()
+    return
+
+def mk_file_name_by_func_ip_time(func_name, ip_addr):
+    dateFmt = '%Y%m%d-%H%M-%S-%f'
+    now = datetime.datetime.today()
+    file_name = func_name + '-' + ip_addr .replace('.', '-')  + '-' + now.strftime(dateFmt)
+    return file_name
+
+def dump_to_file(func_name, ip_addr, text_to_dump):
+    fn = mk_file_name_by_func_ip_time(func_name, ip_addr) + '.json'
+    with open(fn, 'w') as outfile:
+        outfile.write(text_to_dump)
+
+def mk_announce_request(host, snode_ip, snode_port):
+    jo = json.loads(json.dumps(RequestTemplate.announce))
+    jo['params']['timestamp'] = get_faked_timestamp()
+    jo['params']['address'] = host.wallet
+    adj_snode_netw_addr(jo, snode_ip, snode_port)
+    return jo
+
+def send_announce(host, snode_ip = ip_any_local, snode_port = port_srpc):
+    jo = mk_announce_request(host, snode_ip, snode_port)
+    log.info('Announnce JSON to send: {}'.format(json.dumps(jo)))
+
+    url_nrpc = mk_node_rpc_rta_url_by_host(host)
+    log.info('Node RPC url: {}'.format(url_nrpc))
+    hdrs = {'Content-Type':'application/json'}
+    r = requests.post(url_nrpc, json = jo, headers = hdrs)
+    print(' # resp: {}'.format(r.json()))
+    #print(' # resp: {}'.format(json.dumps(r.json(), indent = 2)))
+
+def send_get_connections(ip_addr, port, snode_ip = ip_any_local, snode_port = port_srpc):
+    url_nrpc = mk_node_rpc_url(ip_addr, port)
+    log.info('Node RPC url: {}'.format(url_nrpc))
+
+    json_req = {"jsonrpc":"2.0","id":"0","method":"get_connections"}
+    log.info('JSON to send: {}'.format(json.dumps(json_req)))
+
+    hdrs = {'Content-Type':'application/json'}
+    r = requests.post(url_nrpc, json = json_req, headers = hdrs)
+    rs = r.content
+    rs = r.text
+    print(' # resp: {}'.format(rs))
+    dump_to_file('get-conns', ip_addr, rs)
+    #print(r.json())
+    #print(' # resp: {}'.format(json.dumps(r.json(), indent = 2, ensure_ascii = False, encoding = 'utf8')))
+
+def send_get_peer_list(ip_addr, port):
+    url_nrpc = 'http://' + ip_addr + ':' + str(port) + '/get_peer_list'
+    log.info('Node RPC url: {}'.format(url_nrpc))
+
+    hdrs = {'Content-Type':'application/json'}
+    r = requests.get(url_nrpc, headers = hdrs)
+    rs = json.dumps(r.json(), indent = 2)
+    print(' # resp: {}'.format(rs))
+    dump_to_file('get-peer-list', ip_addr, rs)
+
+def send_get_tunnels(host, snode_ip = ip_any_local, snode_port = port_srpc):
+    url_nrpc = mk_node_rpc_rta_url_by_host(host)
+    log.info('Node RPC url: {}'.format(url_nrpc))
+
+    json_req = {"jsonrpc":"2.0","id":"0","method":"get_tunnels"}
+    log.info('JSON to send: {}'.format(json.dumps(json_req)))
+
+    hdrs = {'Content-Type':'application/json'}
+    r = requests.post(url_nrpc, json = json_req, headers = hdrs)
+    rs = r.text
+    print(' # resp: {}'.format(rs))
+    dump_to_file('get-tunnels', host.ip, rs)
+
+def send_unicast_request(src, dst):
+    url, jo, hdrs = mk_unicast_request(src, dst)
+    log.info('Node RPC url: {}'.format(url))
+    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    r = requests.post(url, json = jo, headers = hdrs)
+    print(' # resp: {}'.format(r.json()))
+
+def send_broadcast_request(src):
+    url, jo, hdrs = mk_broadcast_request(src)
+    log.info('Node RPC url: {}'.format(url))
+    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    r = requests.post(url, json = jo, headers = hdrs)
+    print(' # resp: {}'.format(r.json()))
+
+def send_multicast_request(src, dst_list):
+    url, jo, hdrs = mk_multicast_request(src, dst_list)
+    log.info('Node RPC url: {}'.format(url))
+    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    r = requests.post(url, json = jo, headers = hdrs)
+    print(' # resp: {}'.format(r.json()))
+
+def there_is_running_graft(graft_grep_result, graft_launch_cmd):
+    if graft_grep_result:
+        print('grep-res: `{}`\ncmd `{}`'.format(graft_grep_result, graft_launch_cmd))
+    return graft_launch_cmd in graft_grep_result
+
+def host_is_up(host):
+    graft_grep = exec_ssh_cmd(cmd_grep_graft, host)
+    graft_launch_cmd = mk_shell_cmd_for_start_graftnoded(host)
+    is_up = there_is_running_graft(graft_grep, graft_launch_cmd)
+    print('\n  ##  host `{}` is {}'.format(host.name, ('UP' if is_up else 'Down')))
+    return is_up
+
+def mk_host_up(host):
+    cmd = mk_shell_cmd_for_start_graftnoded(host)
+    print('\n  ##  mk_host_up `{}`'.format(cmd))
+    exec_ssh_cmd(cmd, host)
+
+def mk_host_down(host):
+    kill_host_max_attempt_cnt = 10
+    cmd = cmd_node_down
+    while host_is_up(host):
+        exec_ssh_cmd(cmd, host)
+        if host_is_up(host):
+            time.sleep(2)
+
+def exec_send_announce_to_node_1():
+    send_announce(host1, ip_n1)
+
+def exec_send_announce_to_node_2():
+    send_announce(host2, ip_n2)
+
+def exec_send_announce_to_node_3():
+    send_announce(host3, ip_n3)
+
+def exec_send_announce_to_node_12():
+    exec_send_announce_to_node_1()
+    exec_send_announce_to_node_2()
+
+def exec_send_announce_to_node_13():
+    exec_send_announce_to_node_1()
+    exec_send_announce_to_node_3()
+
+def exec_send_announce_to_node_23():
+    exec_send_announce_to_node_2()
+    exec_send_announce_to_node_3()
+
+def exec_send_announce_to_node_123():
+    exec_send_announce_to_node_1()
+    exec_send_announce_to_node_2()
+    exec_send_announce_to_node_3()
+
+def send_announce_to_node(host, wait_before_send = 0):
+    if wait_before_send:
+        time.sleep(wait_before_send)
+    send_announce(host, ip_n0)
+
+def exec_send_announce_to_node_01():
+    send_announce(host1, ip_n0)
+
+def exec_send_announce_to_node_02():
+    send_announce(host2, ip_n0)
+
+def exec_send_announce_to_node_03():
+    send_announce(host3, ip_n0)
+
+def exec_send_announce_to_node_012():
+    exec_send_announce_to_node_01()
+    exec_send_announce_to_node_02()
+
+def exec_send_announce_to_node_013():
+    exec_send_announce_to_node_01()
+    exec_send_announce_to_node_03()
+
+def exec_send_announce_to_node_023():
+    exec_send_announce_to_node_02()
+    exec_send_announce_to_node_03()
+
+def exec_send_announce_to_node_0123():
+    exec_send_announce_to_node_01()
+    exec_send_announce_to_node_02()
+    exec_send_announce_to_node_03()
+
+
+def exec_get_connections_to_node(ip_addr):
+    send_get_connections(ip_addr, port_nrpc, ip_n0, port_srpc)
+
+def exec_get_connections_to_node_1():
+    exec_get_connections_to_node(ip_n1)
+
+def exec_get_connections_to_node_2():
+    exec_get_connections_to_node(ip_n2)
+
+def exec_get_connections_to_node_3():
+    exec_get_connections_to_node(ip_n3)
+
+def exec_get_connections_to_node_123():
+    exec_get_connections_to_node_1()
+    exec_get_connections_to_node_2()
+    exec_get_connections_to_node_3()
+
+def exec_get_peer_list_of_node(ip_addr):
+    send_get_peer_list(ip_addr, port_nrpc)
+
+def exec_get_peer_list_of_node_1():
+    exec_get_peer_list_of_node(ip_n1)
+
+def exec_get_peer_list_of_node_2():
+    exec_get_peer_list_of_node(ip_n2)
+
+def exec_get_peer_list_of_node_3():
+    exec_get_peer_list_of_node(ip_n3)
+
+def exec_get_peer_list_of_node_123():
+    exec_get_peer_list_of_node_1()
+    exec_get_peer_list_of_node_2()
+    exec_get_peer_list_of_node_3()
+
+def exec_get_123():
+    exec_get_connections_to_node_123()
+    exec_get_peer_list_of_node_123()
+
+
+def exec_get_tunnels_to_node(host):
+    send_get_tunnels(host)
+
+def exec_node_up_1():
+    exec_ssh_cmd(cmd_node_1_up, host1)
+
+def exec_node_up_2():
+    exec_ssh_cmd(cmd_node_2_up, host2)
+
+def exec_node_up_3():
+    exec_ssh_cmd(cmd_node_3_up, host3)
+
+
+def exec_node_down_1():
+    exec_ssh_cmd(cmd_node_1_down, host1)
+
+def exec_node_down_2():
+    exec_ssh_cmd(cmd_node_2_down, host2)
+
+def exec_node_down_3():
+    exec_ssh_cmd(cmd_node_3_down, host3)
+
+
+def send_unicast(src, dst):
+    send_unicast_request(src, dst)
+
+def exec_send_unicast_12():
+    send_unicast_request(host1, host2)
+
+def exec_send_unicast_21():
+    send_unicast_request(host2, host1)
+
+def exec_send_unicast_13():
+    send_unicast_request(host1, host3)
+
+def exec_send_unicast_31():
+    send_unicast_request(host3, host1)
+
+def exec_send_unicast_23():
+    send_unicast_request(host2, host3)
+
+def exec_send_unicast_32():
+    send_unicast_request(host3, host2)
+
+def send_broadcast_from(host):
+    send_broadcast_request(host)
+
+def exec_send_broadcast_1():
+    send_broadcast_request(host1)
+
+def exec_send_broadcast_2():
+    send_broadcast_request(host2)
+
+def exec_send_broadcast_3():
+    send_broadcast_request(host3)
+
+def send_multicast_from(host):
+    dst_list = []
+    for h in env_desc:
+        if h.ip == host.ip:
+            continue
+        dst_list.append(h)
+    send_multicast_request(host, dst_list)
+
+def exec_send_multicast_123():
+    send_multicast_request(host1, [host2, host3])
+
+def exec_send_multicast_213():
+    send_multicast_request(host2, [host1, host3])
+
+def exec_send_multicast_312():
+    send_multicast_request(host3, [host1, host2])
+
+    #ts = time.time()
+    #print('ts: {}'.format(get_current_timestamp()))
+    #cmd = 'ssh gn01 "ps aux | grep graft"'
+
+#def exec_ssh_cmd(cmd, host):
+#    rsa_key_file = ssh_pvt_key_file_name()
+#    k = paramiko.RSAKey.from_private_key_file(rsa_key_file)
+#    sc = paramiko.SSHClient()
+#    sc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#    sc.connect(hostname = host.name, username = host.user, pkey = k)
+#    #sc.connect(srv, username = usr, password=password)
+#    sc_stdin, sc_stdout, sc_stderr = sc.exec_command(cmd)
+#
+#    ssh_cmd_out = ''
+#    while not sc_stdout.channel.exit_status_ready():
+#        # Only print data if there is data to read in the channel
+#        if sc_stdout.channel.recv_ready():
+#            rl, wl, xl = select.select([ sc_stdout.channel ], [ ], [ ], 0.0)
+#            if len(rl) > 0:
+#                tmp = sc_stdout.channel.recv(1024)
+#                #output = tmp.decode()
+#                #print(output)
+#                ssh_cmd_out += tmp.decode()
+#    sc.close()
+#    #print('\n  ## ssh-cmd-out: {}'.format(ssh_cmd_out))
+#    return ssh_cmd_out
+
+def exec_test():
+    print('exec_test ...')
+
+def exec_test_1():
+    #print('h1: {}'.format(host1))
+    #print('ts: {}'.format(get_hires_timestamp()))
+    #print('the user is `{}`'.format(get_username()))
+    #print(ssh_pvt_key_file_name())
+    #print(mk_shell_param_exclusive_node_list(host1))
+    #print(mk_shell_cmd_for_start_graftnoded(host2))
+
+    mk_host_down(host1)
+    time.sleep(2)
+
+    if check_if_host_is_up(host1):
+        print('\n  ## there is running graft ...')
+        mk_host_down(host1)
+        graft_grep = exec_ssh_cmd(cmd_grep_graft, host1)
+        print('\n  ## graft-grep: {}'.format(graft_grep))
+    else:
+        print('\n  ## no any graft found!')
+
+    time.sleep(2)
+    mk_host_up(host1)
+    time.sleep(2)
+
+    graft_grep = exec_ssh_cmd(cmd_grep_graft, host1)
+    graft_launch_cmd = mk_shell_cmd_for_start_graftnoded(host1)
+    if there_is_running_graft(graft_grep, graft_launch_cmd):
+        print('\n  ## there is running graft ...')
+    else:
+        print('\n  ## no any graft found!')
+    #exec_ssh_cmd(cmd_grep_graft, host1)
+
+def create_cmd_line_args_parser():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('action')
+    #ap.add_argument('actions1')
+    return ap
+
+def execute_command_based_on_cmd_line_argumetns():
+    ap = create_cmd_line_args_parser()
+    args = ap.parse_args()
+
+    scenarios = {
+        'sa1':      exec_send_announce_to_node_1,
+        'sa2':      exec_send_announce_to_node_2,
+        'sa3':      exec_send_announce_to_node_3,
+        'sa12':     exec_send_announce_to_node_12,
+        'sa13':     exec_send_announce_to_node_13,
+        'sa23':     exec_send_announce_to_node_23,
+        'sa123':    exec_send_announce_to_node_123,
+
+        'sa01':      exec_send_announce_to_node_01,
+        'sa02':      exec_send_announce_to_node_02,
+        'sa03':      exec_send_announce_to_node_03,
+        'sa012':     exec_send_announce_to_node_012,
+        'sa013':     exec_send_announce_to_node_013,
+        'sa023':     exec_send_announce_to_node_023,
+        'sa0123':    exec_send_announce_to_node_0123,
+
+        'sgc1':     exec_get_connections_to_node_1,
+        'sgc2':     exec_get_connections_to_node_2,
+        'sgc3':     exec_get_connections_to_node_3,
+        'sgc123':   exec_get_connections_to_node_123,
+
+        'sgpl1':    exec_get_peer_list_of_node_1,
+        'sgpl2':    exec_get_peer_list_of_node_2,
+        'sgpl3':    exec_get_peer_list_of_node_3,
+        'sgpl123':  exec_get_peer_list_of_node_123,
+
+        'sg123':    exec_get_123,
+
+        'nu1':      exec_node_up_1,
+        'nu2':      exec_node_up_2,
+        'nu3':      exec_node_up_3,
+
+        'nd1':      exec_node_down_1,
+        'nd2':      exec_node_down_2,
+        'nd3':      exec_node_down_3,
+
+        'sun12':    exec_send_unicast_12,
+        'sun21':    exec_send_unicast_21,
+        'sun13':    exec_send_unicast_13,
+        'sun31':    exec_send_unicast_31,
+        'sun23':    exec_send_unicast_23,
+        'sun32':    exec_send_unicast_32,
+
+        'sbr1':    exec_send_broadcast_1,
+        'sbr2':    exec_send_broadcast_2,
+        'sbr3':    exec_send_broadcast_3,
+
+        'smu123':  exec_send_multicast_123,
+        'smu213':  exec_send_multicast_213,
+        'smu312':  exec_send_multicast_312,
+
+        'test':     exec_test,
+        't1':       exec_test_1
+    }
+
+    try:
+        func = scenarios[args.action]
+        print("Scenario '{}' is going to execute".format(func.__name__))
+        func()
+    except KeyError:
+        print("ERR: unknown action '{}'".format(args.action))
+
+if __name__ == '__main__':
+    execute_command_based_on_cmd_line_argumetns()
+
+    #send_msg(announce_json_data_file_n2, ip_n2, port_nrpc)
+    #send_msg(announce_json_data_file_n3, ip_n3, port_nrpc)
+
+    #send_msg(node_2_announce_json_data_file, n2_ip, n_rpc_port)
+    #send_msg(announce_json_data_file_n3, ip_n3, port_nrpc)
+    #one_request('0.0.0.0', port_srpc)
+    #one_request('0.0.0.0', port_srpc)
+
+#def exec_ssh_cmd(cmd, host, user):
+#    rsa_key_file = '/home/cybo/.ssh/id_rsa'
+#    k = paramiko.RSAKey.from_private_key_file(rsa_key_file)
+#    sc = paramiko.SSHClient()
+#    sc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#    sc.connect(hostname = host, username = user, pkey = k)
+#    sc_stdin, sc_stdout, sc_stderr = sc.exec_command(cmd)
+#
+#    while not sc_stdout.channel.exit_status_ready():
+#        if sc_stdout.channel.recv_ready():
+#            rl, wl, xl = select.select([ sc_stdout.channel ], [ ], [ ], 0.0)
+#            if len(rl) > 0:
+#                tmp = sc_stdout.channel.recv(1024)
+#                output = tmp.decode()
+#                print(output)
+#    sc.close()
+
+#cmd_node_1_up = '/home/ubuntu/projects/graft//bin/graftnoded --testnet --testnet-rpc-bind-port 28681 --rpc-bind-ip 0.0.0.0 --confirm-external-bind --detach --add-exclusive-node 54.197.32.149 --add-exclusive-node 52.90.236.226'
+#cmd_node_2_up = '/home/ubuntu/projects/graft//bin/graftnoded --testnet --testnet-rpc-bind-port 28681 --rpc-bind-ip 0.0.0.0 --confirm-external-bind --detach --add-exclusive-node 54.226.23.229 --add-exclusive-node 52.90.236.226'
+#cmd_node_3_up = '/home/ubuntu/projects/graft//bin/graftnoded --testnet --testnet-rpc-bind-port 28681 --rpc-bind-ip 0.0.0.0 --confirm-external-bind --detach --add-exclusive-node 54.226.23.229 --add-exclusive-node 54.197.32.149'
+
+#cmd_graftnoded_up = '/home/ubuntu/projects/graft//bin/graftnoded --testnet --testnet-rpc-bind-port 28681 --rpc-bind-ip 0.0.0.0 --confirm-external-bind --detach --add-exclusive-node 54.197.32.149 --add-exclusive-node 52.90.236.226'
+
+#cmd_graftnoded_up = '/home/ubuntu/projects/GraftNetwork/build/release/bin/graftnoded --testnet --testnet-rpc-bind-port 28681 --rpc-bind-ip 0.0.0.0 --confirm-external-bind --add-exclusive-node 54.197.32.149 --add-exclusive-node 52.90.236.226 && wait(10)'
+#cmd = cmd_graftnoded_up
+#cmd = cmd_grep_graft
+#cmd = cmd_kill_graft
+
+
+#announce_json_file = 'announce.json'
+#unicast_json_file = 'unicast.json'
+#broadcast_json_file = 'broadcast.json'
+#multicast_json_file = 'multicast.json'
+
+#def func(x):
+#    return x + 1
+#
+#def test_answer():
+#    assert func(3) != 5
+#    print('Aloha, man!')
+
+
+    #with open(mk_full_file_name_from_local_name(announce_json_file)) as jf:
+    #    ss = jf.read()
+    #    jo = json.loads(ss)
+    #    jo['params']['timestamp'] = get_faked_timestamp()
+    #    jo['params']['address'] = host.wallet
+    #    adj_snode_netw_addr(jo, snode_ip, snode_port)
+    #return jo
+
+
+
+#def mk_unicast_request(src, dst):
+#    with open(mk_full_file_name_from_local_name(unicast_json_file)) as jf:
+#        ss = jf.read()
+#        jo = json.loads(ss)
+#        jo['params']['sender_address'] = src.wallet
+#        jo['params']['receiver_address'] = dst.wallet
+#        jo['params']['data'] = '{}:{}'.format(src.ip, get_hires_timestamp())
+#
+#    url = mk_node_rpc_rta_url_by_host(src)
+#    hdrs = {'Content-Type':'application/json'}
+#    return url, jo, hdrs
+
+
+
+
+#def mk_broadcast_request(src):
+#    with open(mk_full_file_name_from_local_name(broadcast_json_file)) as jf:
+#        ss = jf.read()
+#        jo = json.loads(ss)
+#        jo['params']['sender_address'] = src.wallet
+#        jo['params']['data'] = '{}:{}'.format(src.ip, get_hires_timestamp())
+#
+#    url = mk_node_rpc_rta_url_by_host(src)
+#    hdrs = {'Content-Type':'application/json'}
+#    return url, jo, hdrs
+#
+#def mk_multicast_request(src, dst_list):
+#    with open(mk_full_file_name_from_local_name(multicast_json_file)) as jf:
+#        ss = jf.read()
+#        jo = json.loads(ss)
+#        jo['params']['sender_address'] = src.wallet
+#        jo['params']['data'] = '{}:{}'.format(src.ip, get_hires_timestamp())
+#
+#        dst_wallets = []
+#        for h in dst_list:
+#          dst_wallets.append(h.wallet)
+#        jo['params']['receiver_addresses'] = dst_wallets
+#
+#    url = mk_node_rpc_rta_url_by_host(src)
+#    hdrs = {'Content-Type':'application/json'}
+#    return url, jo, hdrs
+
+
+#from future.moves.urllib.parse import urlparse, parse_qs
