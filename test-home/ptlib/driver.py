@@ -10,6 +10,7 @@ import time
 import datetime
 import subprocess
 from .ssh_ctl import SSHClient
+from .request_template import RequestTemplate
 from typing import NamedTuple
 
 class Host(NamedTuple):
@@ -19,30 +20,33 @@ class Host(NamedTuple):
     wallet: str
     port_nrpc: int
 
-env_file = 'env.json'
+cfg_file = 'conf.json'
 
-def load_environment_description(path):
-    full_env = os.path.join(path, env_file)
+def load_config(path, conf_obj):
+    conf = os.path.join(path, cfg_file)
 
-    if not os.path.exists(full_env):
-        sys.exit('File with environment description [{}] not found'.format(full_env))
+    if not os.path.exists(conf):
+        sys.exit('File with environment description [{}] not found'.format(conf))
 
-    if not os.path.isfile(full_env):
-        sys.exit('[{}] is not a file - cannot be read'.format(full_env))
+    if not os.path.isfile(conf):
+        sys.exit('[{}] is not a file - cannot be read'.format(conf))
 
-    env_desc = []
-    with open(full_env) as jf:
+    with open(conf) as jf:
         js = jf.read()
         jo = json.loads(js)
-        for obj in jo:
-           env_desc.append(Host(**obj))
 
-    print('env-desc [{}] loaded, cnt:{}'.format(full_env, len(env_desc)))
-    return env_desc
+        nodes = []
+        for obj in jo['nodes']:
+           nodes.append(Host(**obj))
 
-def load_env_descr_by_current_conftest(curr_conftest):
+        conf_obj.nodes = nodes
+        conf_obj.wait = jo['wait']
+
+    print('conf [{}] loaded, node-cnt:{}'.format(conf, len(nodes)))
+
+def load_conf_by_current_conftest(curr_conftest, conf_obj):
     curr_path = os.path.dirname(os.path.realpath(curr_conftest))
-    return load_environment_description(curr_path)
+    return load_config(curr_path, conf_obj)
 
 #########################################################################################
 
@@ -62,63 +66,6 @@ def drv_name():
 #    color: str
 #    mileage: float
 #    automatic: bool
-
-class RequestTemplate():
-    announce = {
-                  "jsonrpc":"2.0",
-                  "method":"send_supernode_announce",
-                  "id":0,
-                  "params":{
-                      "signed_key_images":[
-                        {
-                          "key_image":"f219e6151c84",
-                          "signature":"f88d136f02683407b0bff9a1473761"
-                        }
-                      ],
-                      "timestamp":1530799007,
-                      "address":"F4KrqowwEoY6K9J8dV75toToyYYmHdMbkWgFCm4A9uMhND3uGtnMFU4gAGLBVYFEbz2zC9jrVvCS96x3HUcy6nAd4q4Robb",
-                      "stake_amount":53370100000000000,
-                      "height":114374,
-                      "secret_viewkey":"5ee2b4d62214d4ae3385c80e4485cb7547690144c3bbddf31fd75351900a8b0e",
-                      "network_address":"54.226.23.229:28690/dapi/v2.0"
-                  }
-                }
-
-    broadcast = {
-                  "json_rpc" : "2.0",
-                  "method" : "broadcast",
-                  "id" : "0",
-                  "params": {
-                    "sender_address" : "",
-                    "callback_uri" : "",
-                    "data" : ""
-                  }
-                }
-
-    multicast = {
-                  "json_rpc" : "2.0",
-                  "method" : "multicast",
-                  "id" : "0",
-                  "params": {
-                    "receiver_addresses" : [ "address1", "address2" ],
-                    "sender_address" : "",
-                    "callback_uri" : "",
-                    "data" : ""
-                  }
-                }
-
-    unicast = {
-                "jsonrpc":"2.0",
-                "id":"0",
-                "method":"unicast",
-                "params": {
-                  "sender_address":"F8C3ZSW9XFHJuz78vqJiFo3S5bnMug8nA8QziJ5YgJtHcFXZZ9QYmXQVut6CkMhoLwXeuhcFdeDUm8dxBKgLRbG7RcA7Fvq",
-                  "receiver_address":"FAemK2QsWwsDAxgCKsTJUbhk1XwAu1eg4eVkYNbYSkQzLP8wobvgG7ia1tXcpSY6k4f7rFmypq6wHKT4fYJJ3XFL1KRgNrj",
-                  "callback_uri":"",
-                  "data":"eyJQYXltZW50SUQiOiI2MGU2YTYyMC04NWE2LTQ3OGQtODAyZC02ZGIwNzEzNzQwMWYiLCJCbG9ja051bWJlciI6MTc2MX0=",
-                  "wait_answer": False
-                }
-              }
 
 
 gn00 = 'gn00'

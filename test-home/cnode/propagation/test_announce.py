@@ -20,8 +20,8 @@ def check_result(resp_list, peer_sender, peer_subj):
     return found
 
 #@pytest.mark.skip(reason = 'skip')
-def test_dbg(report_ctl):
-    print('test one! ...')
+def test_dbg(report_ctl, host_starter):
+    print('dbg-test-session is taking off ...')
     #for host in ss.env.hosts:
     #    print('host [{}]'.format(host.name))
 
@@ -34,16 +34,14 @@ def test_dbg(report_ctl):
 
     #ss.core.exec_get_123()
     #ss.core.exec_get_tunnels_to_node(ss.env.hosts[0])
-    ss.host_requester.get_tunnels()
-    ss.host_requester.get_tunnels()
 
+    #ss.host_requester.get_tunnels()
+    print('arng-cnt: {}:{}'.format(ss.cfg.count_of_arrangement(), ss.cfg.count_of_arrangement_with_self()))
 
     #ss.host_log_collector.prepare_log_capture(ss.env.hosts)
 
     #ss.host_log_collector.put(ss.env.hosts[0])
-    #ss.host_log_collector.get(ss.env.hosts[0])
     #ss.host_log_collector.unpack()
-
 
     #for src in ss.env.hosts:
     #    for dst in ss.env.hosts:
@@ -52,22 +50,11 @@ def test_dbg(report_ctl):
     #        print('from {} about {}: {}'.format(src.name, dst.name, check_result([], src, dst)))
 
 #@pytest.mark.skip(reason = 'skip')
-def test(report_ctl, host_ctl):
-    #tn = NTD.get_test_name(__file__)
+def test(report_ctl, host_starter):
     tn = 'announce'
     print('\n  ##  {} test is beginning ...'.format(tn))
 
-    p1 = 2
-    p2 = 2
-
-    p1 = 20
-    p2 = 15
-
-    p1 = 15
-    p2 = 10
-
-    p1 = 10
-    p2 = 3
+    #ss.host_requester.get_tunnels()
 
     ns = SNodeStub(tn)
 
@@ -77,32 +64,48 @@ def test(report_ctl, host_ctl):
 
     ns.run()
 
-    for host in ss.env.hosts:
-        ss.core.send_announce_to_node(host, p1)
+    for host in ss.cfg.nodes:
+        ss.core.send_announce_to_node(host, ss.cfg.wait['between_announces'])
 
-    time.sleep(p1)
+    #ss.host_requester.get_tunnels()
+
+    time.sleep(ss.cfg.wait['between_announces'])
     received = len(ns.resp_list)
     print('\n  ##  reqs done by now: {}'.format(received))
 
-    ns.cnt_resp_to_collect = received + 6
+    ns.cnt_resp_to_collect = received + ss.cfg.count_of_arrangement()
 
-    for host in ss.env.hosts:
-        ss.core.send_announce_to_node(host, p2)
+    #ss.host_requester.get_tunnels()
+    for host in ss.cfg.nodes:
+        ss.core.send_announce_to_node(host, ss.cfg.wait['between_test_request'])
+        #ss.host_requester.get_tunnels()
 
     ns.wait_till_complete(3)
 
     print('{}'.format(json.dumps(ns.resp_list, indent = 2)))
 
-    for src in ss.env.hosts:
-        for dst in ss.env.hosts:
+    for src in ss.cfg.nodes:
+        for dst in ss.cfg.nodes:
             if src.ip == dst.ip:
                 continue
             print('from {} about {}: {}'.format(src.name, dst.name, check_result(ns.resp_list, src, dst)))
 
-    for src in ss.env.hosts:
-        for dst in ss.env.hosts:
+    for src in ss.cfg.nodes:
+        for dst in ss.cfg.nodes:
             if src.ip == dst.ip:
                 continue
             assert check_result(ns.resp_list, src, dst)
 
+
+#"between_announces": "10",
+#"between_test_request": "3"
+#p1 = 20
+#p2 = 15
+#
+#p1 = 15
+#p2 = 10
+#
+#p1 = 10
+#p2 = 3
+#tn = NTD.get_test_name(__file__)
 
