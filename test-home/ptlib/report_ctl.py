@@ -3,6 +3,7 @@
 import os
 import time
 import datetime
+import ptlib.driver as drv
 
 def mk_dirs(path):
     os.makedirs(path, exist_ok = True)
@@ -26,10 +27,11 @@ class ReportController(object):
         self.__cwd = curr_work_dir
         #print('report-contorller cwd [{}]'.format(self.__cwd))
 
-        time_stamp_fmt = '%Y%m%d-%H%M%S-%f'
-        time.sleep(0.002)
-        now = datetime.datetime.today()
-        self.__time_stamp = now.strftime(time_stamp_fmt)[:-3][2:]
+        #time_stamp_fmt = '%Y%m%d-%H%M%S-%f'
+        #time.sleep(0.002)
+        #now = datetime.datetime.today()
+        #self.__time_stamp = now.strftime(time_stamp_fmt)[:-3][2:]
+        self.__time_stamp = drv.mk_time_stamp_for_test()
         self.__report_timed_dir_name = os.path.join(self.__cwd, self.report_home_dir, self.__time_stamp)
         self.__current_report_name = ''
 

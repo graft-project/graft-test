@@ -25,8 +25,8 @@
   ],
   "wait":
   {
-    "between_announces": "10",
-    "between_test_request": "3"
+    "between_announces": 10,
+    "between_test_request": 1
   }
 }
 
