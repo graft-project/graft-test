@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
-import os
+
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+
 import argparse
 import json
 import logging
@@ -9,8 +12,8 @@ import shelve
 import time
 import datetime
 import subprocess
-from .ssh_ctl import SSHClient
-from .request_template import RequestTemplate
+from ssh_ctl import SSHClient
+from request_template import RequestTemplate
 from typing import NamedTuple
 
 class Host(NamedTuple):
@@ -20,10 +23,8 @@ class Host(NamedTuple):
     wallet: str
     port_nrpc: int
 
-cfg_file = 'conf.json'
-
-def load_config(path, conf_obj):
-    conf = os.path.join(path, cfg_file)
+def load_config(path, conf_file, conf_obj):
+    conf = os.path.join(path, conf_file)
 
     if not os.path.exists(conf):
         sys.exit('File with environment description [{}] not found'.format(conf))
@@ -45,14 +46,39 @@ def load_config(path, conf_obj):
     print('conf [{}] loaded, node-cnt:{}'.format(conf, len(nodes)))
 
 def load_conf_by_current_conftest(curr_conftest, conf_obj):
+    cfg_file = 'conf.json'
     curr_path = os.path.dirname(os.path.realpath(curr_conftest))
-    return load_config(curr_path, conf_obj)
+    return load_config(curr_path, cfg_file, conf_obj)
+
+def mk_remote_path_to_log_dir(host):
+    return '/home/{}/.graft/testnet/'.format(host.user)
+    #return '/home/{}/projects/graft/bin/graftnoded'.format(host.user)
+
+def mk_time_stamp_for_test():
+    time_stamp_fmt = '%Y%m%d-%H%M%S-%f'
+    now = datetime.datetime.today()
+    time_stamp = now.strftime(time_stamp_fmt)[:-3][2:]
+    return time_stamp
 
 #########################################################################################
 
 def drv_name():
     return 'main graft test driver'
 
+#testnet = 1
+#net-id = 14686520-4172-7420-6f76-205761722035
+#log-level = 4
+#testnet-rpc-bind-port = 28681
+#rpc-bind-ip = 0.0.0.0
+#confirm-external-bind = 1
+#
+#seed-node = 54.226.23.229:28680
+#seed-node = 54.197.32.149:28680
+#seed-node = 52.90.236.226:28680
+#
+#add-exclusive-node = 54.226.23.229:28680
+#add-exclusive-node = 54.197.32.149:28680
+#add-exclusive-node = 52.90.236.226:28680
 
 #  Ports
 #    8081 - block explorer port
@@ -546,6 +572,42 @@ def exec_send_multicast_213():
 def exec_send_multicast_312():
     send_multicast_request(host3, [host1, host2])
 
+
+def exec_start_host_by_idx():
+    params = cmd_line_params['0'].params
+    if not params:
+      sys.exit('Not enough input param')
+
+    from host_ctl import HostCtl
+    from test_run_conf import TestRunConfig
+    cfg = TestRunConfig()
+    cfg_file = 'conf.default.json'
+    curr_path = os.path.dirname(os.path.realpath(__file__))
+    load_config(curr_path, cfg_file, cfg)
+    hc = HostCtl(lambda: cfg.nodes)
+    host_idx = int(params[0])
+    hc.start(host_idx, mk_time_stamp_for_test(), mk_remote_path_to_log_dir(cfg.nodes[host_idx]))
+
+def exec_start_all_hosts():
+    from host_ctl import HostCtl
+    from test_run_conf import TestRunConfig
+    cfg = TestRunConfig()
+    cfg_file = 'conf.default.json'
+    curr_path = os.path.dirname(os.path.realpath(__file__))
+    load_config(curr_path, cfg_file, cfg)
+    hc = HostCtl(lambda: cfg.nodes)
+    hc.start_all2(mk_time_stamp_for_test(), mk_remote_path_to_log_dir(cfg.nodes[0]))
+
+def exec_stop_all_hosts():
+    from host_ctl import HostCtl
+    from test_run_conf import TestRunConfig
+    cfg = TestRunConfig()
+    cfg_file = 'conf.default.json'
+    curr_path = os.path.dirname(os.path.realpath(__file__))
+    load_config(curr_path, cfg_file, cfg)
+    hc = HostCtl(lambda: cfg.nodes)
+    hc.stop_all()
+
     #ts = time.time()
     #print('ts: {}'.format(get_current_timestamp()))
     #cmd = 'ssh gn01 "ps aux | grep graft"'
@@ -610,68 +672,81 @@ def exec_test_1():
 def create_cmd_line_args_parser():
     ap = argparse.ArgumentParser()
     ap.add_argument('action')
+    ap.add_argument('params', nargs = argparse.REMAINDER)
+#required = False
+
+
     #ap.add_argument('actions1')
     return ap
+
+scenarios = {
+    'sa1':      exec_send_announce_to_node_1,
+    'sa2':      exec_send_announce_to_node_2,
+    'sa3':      exec_send_announce_to_node_3,
+    'sa12':     exec_send_announce_to_node_12,
+    'sa13':     exec_send_announce_to_node_13,
+    'sa23':     exec_send_announce_to_node_23,
+    'sa123':    exec_send_announce_to_node_123,
+
+    'sa01':      exec_send_announce_to_node_01,
+    'sa02':      exec_send_announce_to_node_02,
+    'sa03':      exec_send_announce_to_node_03,
+    'sa012':     exec_send_announce_to_node_012,
+    'sa013':     exec_send_announce_to_node_013,
+    'sa023':     exec_send_announce_to_node_023,
+    'sa0123':    exec_send_announce_to_node_0123,
+
+    'sgc1':     exec_get_connections_to_node_1,
+    'sgc2':     exec_get_connections_to_node_2,
+    'sgc3':     exec_get_connections_to_node_3,
+    'sgc123':   exec_get_connections_to_node_123,
+
+    'sgpl1':    exec_get_peer_list_of_node_1,
+    'sgpl2':    exec_get_peer_list_of_node_2,
+    'sgpl3':    exec_get_peer_list_of_node_3,
+    'sgpl123':  exec_get_peer_list_of_node_123,
+
+    'sg123':    exec_get_123,
+
+    'nu1':      exec_node_up_1,
+    'nu2':      exec_node_up_2,
+    'nu3':      exec_node_up_3,
+
+    'nd1':      exec_node_down_1,
+    'nd2':      exec_node_down_2,
+    'nd3':      exec_node_down_3,
+
+    'sun12':    exec_send_unicast_12,
+    'sun21':    exec_send_unicast_21,
+    'sun13':    exec_send_unicast_13,
+    'sun31':    exec_send_unicast_31,
+    'sun23':    exec_send_unicast_23,
+    'sun32':    exec_send_unicast_32,
+
+    'sbr1':    exec_send_broadcast_1,
+    'sbr2':    exec_send_broadcast_2,
+    'sbr3':    exec_send_broadcast_3,
+
+    'smu123':  exec_send_multicast_123,
+    'smu213':  exec_send_multicast_213,
+    'smu312':  exec_send_multicast_312,
+
+    'shidx':   exec_start_host_by_idx,
+    'ahup':    exec_start_all_hosts,
+    'ahdn':    exec_stop_all_hosts,
+
+    'test':     exec_test,
+    't1':       exec_test_1
+}
+
+cmd_line_params = {}
 
 def execute_command_based_on_cmd_line_argumetns():
     ap = create_cmd_line_args_parser()
     args = ap.parse_args()
+    cmd_line_params['0'] = args
 
-    scenarios = {
-        'sa1':      exec_send_announce_to_node_1,
-        'sa2':      exec_send_announce_to_node_2,
-        'sa3':      exec_send_announce_to_node_3,
-        'sa12':     exec_send_announce_to_node_12,
-        'sa13':     exec_send_announce_to_node_13,
-        'sa23':     exec_send_announce_to_node_23,
-        'sa123':    exec_send_announce_to_node_123,
-
-        'sa01':      exec_send_announce_to_node_01,
-        'sa02':      exec_send_announce_to_node_02,
-        'sa03':      exec_send_announce_to_node_03,
-        'sa012':     exec_send_announce_to_node_012,
-        'sa013':     exec_send_announce_to_node_013,
-        'sa023':     exec_send_announce_to_node_023,
-        'sa0123':    exec_send_announce_to_node_0123,
-
-        'sgc1':     exec_get_connections_to_node_1,
-        'sgc2':     exec_get_connections_to_node_2,
-        'sgc3':     exec_get_connections_to_node_3,
-        'sgc123':   exec_get_connections_to_node_123,
-
-        'sgpl1':    exec_get_peer_list_of_node_1,
-        'sgpl2':    exec_get_peer_list_of_node_2,
-        'sgpl3':    exec_get_peer_list_of_node_3,
-        'sgpl123':  exec_get_peer_list_of_node_123,
-
-        'sg123':    exec_get_123,
-
-        'nu1':      exec_node_up_1,
-        'nu2':      exec_node_up_2,
-        'nu3':      exec_node_up_3,
-
-        'nd1':      exec_node_down_1,
-        'nd2':      exec_node_down_2,
-        'nd3':      exec_node_down_3,
-
-        'sun12':    exec_send_unicast_12,
-        'sun21':    exec_send_unicast_21,
-        'sun13':    exec_send_unicast_13,
-        'sun31':    exec_send_unicast_31,
-        'sun23':    exec_send_unicast_23,
-        'sun32':    exec_send_unicast_32,
-
-        'sbr1':    exec_send_broadcast_1,
-        'sbr2':    exec_send_broadcast_2,
-        'sbr3':    exec_send_broadcast_3,
-
-        'smu123':  exec_send_multicast_123,
-        'smu213':  exec_send_multicast_213,
-        'smu312':  exec_send_multicast_312,
-
-        'test':     exec_test,
-        't1':       exec_test_1
-    }
+    print('args: {}'.format(args))
 
     try:
         func = scenarios[args.action]

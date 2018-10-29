@@ -54,10 +54,10 @@ class HostRequester(object):
 
     def thread_get_tunnels(self, host, resp):
         url_nrpc = self.__core.mk_node_rpc_rta_url_by_host(host)
-        #log.info('Node RPC url: {}'.format(url_nrpc))
+        log.info('Node RPC url: {}'.format(url_nrpc))
 
         json_req = {"jsonrpc":"2.0","id":"0","method":"get_tunnels"}
-        #log.info('JSON to send: {}'.format(json.dumps(json_req)))
+        log.info('JSON to send: {}'.format(json.dumps(json_req)))
 
         hdrs = {'Content-Type':'application/json'}
         r = requests.post(url_nrpc, json = json_req, headers = hdrs)

@@ -49,7 +49,7 @@ def test_dbg(report_ctl, host_starter):
     #            continue
     #        print('from {} about {}: {}'.format(src.name, dst.name, check_result([], src, dst)))
 
-#@pytest.mark.skip(reason = 'skip')
+@pytest.mark.skip(reason = 'skip')
 def test(report_ctl, host_starter):
     tn = 'announce'
     print('\n  ##  {} test is beginning ...'.format(tn))

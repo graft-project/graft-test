@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import io
 import pwd
 import select
 import paramiko
@@ -48,6 +49,11 @@ class SSHClient(object):
     def scp_put(self, files, remote_path):
     	with SCPClient(self.__ssh_client.get_transport()) as scp:
             scp.put(files, remote_path)
+
+    def scp_put_from_str(self, remote_path, str_content):
+        bts = io.BytesIO(bytes(str_content, 'ascii'))
+        with SCPClient(self.__ssh_client.get_transport()) as scp:
+            scp.putfo(bts, remote_path)
 
     def scp_get(self, remote_target_file, local_dst_path):
     	with SCPClient(self.__ssh_client.get_transport()) as scp:
