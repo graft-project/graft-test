@@ -4,8 +4,11 @@ from ssh_ctl import SSHClient
 import os
 import time
 import threading
+import copy
+#from typing import NamedTuple
 
 cmd_grep_graft = 'ps aux | grep -v grep | grep graft'
+cmd_grep_graftnoded = 'ps aux | grep -v grep | grep graftnoded'
 cmd_kill_graft = 'pkill graft'
 ip_any_local = '0.0.0.0'
 
@@ -31,6 +34,124 @@ ip_any_local = '0.0.0.0'
 #add-exclusive-node = 54.226.23.229:28680
 #add-exclusive-node = 54.197.32.149:28680
 #add-exclusive-node = 52.90.236.226:28680
+
+
+def mk_grep_exp_for_proc(proc):
+    return 'ps aux | grep -v grep | grep ' + proc.name
+
+def mk_kill_exp_for_proc(proc):
+    return 'pkill ' + proc.name
+
+
+class ProcPropsBase(object):
+    def __init__(self, name):
+        self.__name = name
+        self.__host = None
+        self.prepare_to_start()
+
+    @property
+    def name(self):
+        return self.__name
+
+    @property
+    def host(self):
+        return self.__host
+
+    @host.setter
+    def host(self, val):
+        self.__host = val
+
+    @property
+    def cmd_grep(self):
+        return mk_grep_exp_for_proc(self)
+
+    @property
+    def cmd_kill(self):
+        return mk_kill_exp_for_proc(self)
+
+    @property
+    def cmd_start(self):
+        sys.exit('ProcPropsBase::cmd_start - NOT IMPLEMENTED')
+
+    def is_up(self, ssh_client):
+        test = ssh_client.exec_ssh_cmd(self.cmd_grep)
+        print('cmd-grep: [{}:{}] - [{}]'.format(self.host.name, self.name, self.cmd_grep))
+        print(test)
+        hit = self.name in test
+        print('is-up: [{}:{}] {}'.format(self.host.name, self.name, hit))
+        return hit
+
+    def do_prestart_action(self, ssh_client):
+        pass
+
+    def prepare_to_start(self):
+        pass
+
+class ProcPropsGraftnoded(ProcPropsBase):
+    def __init__(self):
+        super().__init__('graftnoded')
+        self.__path = ''
+        self.__time_stamp = ''
+        self.__host_list = None
+        self.__cmd_start_cache = None
+
+    @property
+    def cmd_start(self):
+        return self.__cmd_start_cache
+
+    def pass_args_for_cmd_start(self, path, time_stamp, host_list):
+        self.__path = path
+        sefl.__time_stamp = time_stamp
+        sefl.__host_list = host_list
+
+    def do_prestart_action(ssh_client):
+        if not self.__prestart_action_complete:
+            self.__prestart_action_complete = True
+            test_suite_conf_file_name = os.path.join(self.__path, 'graft.conf.{}'.format(self.__time_stamp))
+            self.__cmd_start_cache = mk_shell_cmd_to_start_graftnoded_with_config(self.host, test_suite_conf_file_name)
+            conf_file = mk_config_file(self.host, self.__host_list)
+            ssh_client.scp_put_from_str(test_suite_conf_file_name, conf_file)
+
+    def prepare_to_start(self):
+        self.__prestart_action_complete = False
+
+
+class ProcPropsWalletCLI(ProcPropsBase):
+    def __init__(self):
+        super().__init__('graft-wallet-cli')
+
+    @property
+    def cmd_start(self):
+        sys.exit('ProcPropsWalletCLI::cmd_start - NOT IMPLEMENTED')
+
+
+class ProcPropsGraftServer(ProcPropsBase):
+    def __init__(self):
+        super().__init__('graft_server')
+
+    @property
+    def cmd_start(self):
+        sys.exit('ProcPropsGraftServer::cmd_start - NOT IMPLEMENTED')
+
+
+class GraftProc(object):
+    def __init__(self):
+        self.__gpnoded = ProcPropsGraftnoded()
+        self.__gpwallet_cli = ProcPropsWalletCLI()
+        self.__gpgraft_server = ProcPropsGraftServer()
+
+    @property
+    def noded(self):
+        return self.__gpnoded
+
+    @property
+    def wallet_cli(self):
+        return self.__gpwallet_cli
+
+    @property
+    def graft_server(self):
+        return self.__gpgraft_server
+
 
 def cfg_file_add_switch(cfg, switch_name):
     cfg += switch_name + ' = 1' + '\n'
@@ -140,90 +261,75 @@ def mk_shell_cmd_to_start_graftnoded(host, host_list = []):
 #    return graft_launch_cmd in graft_grep_result
 
 
-def mk_host_up(host):
-    cmd = mk_shell_cmd_for_start_graftnoded(host)
-    print('\n  ##  mk_host_up `{}`'.format(cmd))
-    exec_ssh_cmd(cmd, host)
+#def mk_host_up(host):
+#    cmd = mk_shell_cmd_for_start_graftnoded(host)
+#    print('\n  ##  mk_host_up `{}`'.format(cmd))
+#    exec_ssh_cmd(cmd, host)
+#
+#def mk_host_down(host):
+#    kill_host_max_attempt_cnt = 10
+#    cmd = cmd_kill_graft
+#    while host_is_up(host):
+#        #print('\n  ##  host `{}` is {}'.format(host.name, ('UP' if is_up else 'Down')))
+#        print('\n  ##  host `{}` is UP'.format(host))
+#        exec_ssh_cmd(cmd, host)
+#        if host_is_up(host):
+#            time.sleep(2)
 
-def mk_host_down(host):
+
+def try_proc_to_shutdown(ssh_client, proc):
     kill_host_max_attempt_cnt = 10
-    cmd = cmd_kill_graft
-    while host_is_up(host):
-        #print('\n  ##  host `{}` is {}'.format(host.name, ('UP' if is_up else 'Down')))
-        print('\n  ##  host `{}` is UP'.format(host))
-        exec_ssh_cmd(cmd, host)
-        if host_is_up(host):
-            time.sleep(2)
-
-def host_is_up(ssh_client):
-    graft_grep = ssh_client.exec_ssh_cmd(cmd_grep_graft)
-    is_up = 'graftnoded' in graft_grep
-    return is_up
-
-def try_host_to_shutdown(ssh_client, host):
-    #print('try_host_to_shutdown for {}'.format(host.name))
-    kill_host_max_attempt_cnt = 10
-    cmd = cmd_kill_graft
-    while host_is_up(ssh_client):
-        print('  ##  host `{}` is UP'.format(host.name))
-        ssh_client.exec_ssh_cmd(cmd_kill_graft)
+    while proc.is_up(ssh_client):
+        print('  ##  proc `{}:{}` is UP'.format(proc.host.name, proc.name))
+        #ssh_client.exec_ssh_cmd(proc.cmd_kill)
+        print('  ##  proc `{}:{}` exec {}'.format(proc.host.name, proc.name, proc.cmd_kill))
         time.sleep(1)
-        if host_is_up(ssh_client):
+        if proc.is_up(ssh_client):
             time.sleep(2)
         else:
-            print('  ##  host `{}` is down'.format(host.name))
+            print('  ##  host `{}` is down'.format(proc.host.name, proc.name))
             break
 
-        #print('\n  ##  host `{}` is {}'.format(host.name, ('UP' if is_up else 'Down')))
 
 class HostCtl(object):
     def __init__(self, host_list):
         self.__host_list = host_list
 
-    def start_all(self):
-        hosts = self.__host_list()
-        for h in hosts:
-            cmd = mk_shell_cmd_to_start_graftnoded(h, hosts)
-            with SSHClient(h) as sc:
-                try_host_to_shutdown(sc, h)
-                print('  ## starting host {}: [{}]'.format(h.name, cmd))
-                sc.exec_ssh_cmd(cmd)
-
-    def do_action_in_parallel(self, thread_func, **kwargs):
+    def do_action_in_parallel(self, thread_func, proc, **kwargs):
         threads = []
         hosts = self.__host_list()
         for h in hosts:
-            th = threading.Thread(target = thread_func, args = [h], kwargs = kwargs)
+            p = copy.deepcopy(proc)
+            p.host = h
+            th = threading.Thread(target = thread_func, args = [p], kwargs = kwargs)
             th.start()
             threads.append(th)
         return threads
 
-    def thread_start_all2(self, host, **kwargs):
-        test_time_stamp = kwargs['test_time_stamp']
-        remote_path_to_log = kwargs['remote_path_to_log']
-        #print('{}\n{}\n{}'.format(host.name, test_time_stamp, remote_path_to_log))
-        test_suite_conf_file_name = os.path.join(remote_path_to_log, 'graft.conf.{}'.format(test_time_stamp))
-        conf_file = mk_config_file(host, self.__host_list())
-        #print(conf_file)
-        cmd = mk_shell_cmd_to_start_graftnoded_with_config(host, test_suite_conf_file_name)
-        with SSHClient(host) as sc:
-            try_host_to_shutdown(sc, host)
-            sc.scp_put_from_str(test_suite_conf_file_name, conf_file)
-            print('  ## starting host {}: [{}]'.format(host.name, cmd))
-            sc.exec_ssh_cmd(cmd)
+    def thread_start_all2(self, proc, **kwargs):
+        proc.prepare_to_start()
+        with SSHClient(proc.host) as sc:
+            try_proc_to_shutdown(sc, proc)
+            proc.do_prestart_action(sc)
+            print('  ## starting proc {}:{}: [{}]'.format(proc.host.name, proc.name, proc.cmd_start))
+            sc.exec_ssh_cmd(proc.cmd_start)
 
-    def start_all2(self, test_time_stamp, remote_path_to_log):
-        kwargs = { 'test_time_stamp': test_time_stamp, 'remote_path_to_log': remote_path_to_log }
-        threads = self.do_action_in_parallel(self.thread_start_all2, **kwargs)
+    def start_all2(self, proc):
+        threads = self.do_action_in_parallel(self.thread_start_all2, proc)
         for t in threads:
             t.join()
 
-    def thread_stop_all(self, host, **kwargs):
-        with SSHClient(host) as sc:
-            try_host_to_shutdown(sc, host)
 
-    def stop_all(self):
-        threads = self.do_action_in_parallel(self.thread_stop_all)
+        #, test_time_stamp, remote_path_to_log
+        #kwargs = { 'test_time_stamp': test_time_stamp, 'remote_path_to_log': remote_path_to_log }
+        #threads = self.do_action_in_parallel(self.thread_start_all2, **kwargs)
+
+    def thread_stop_all(self, proc, **kwargs):
+        with SSHClient(proc.host) as sc:
+            try_proc_to_shutdown(sc, proc)
+
+    def stop_all(self, proc):
+        threads = self.do_action_in_parallel(self.thread_stop_all, proc)
         for t in threads:
             t.join()
 
@@ -235,21 +341,32 @@ class HostCtl(object):
         print(conf_file)
         cmd = mk_shell_cmd_to_start_graftnoded_with_config(host, test_suite_conf_file_name)
         with SSHClient(host) as sc:
-            try_host_to_shutdown(sc, host)
+            try_proc_to_shutdown(sc, proc)
             sc.scp_put_from_str(test_suite_conf_file_name, conf_file)
             print('  ## starting host {}: [{}]'.format(host.name, cmd))
             sc.exec_ssh_cmd(cmd)
+
+
+#    def start_all(self):
+#        hosts = self.__host_list()
+#        for h in hosts:
+#            cmd = mk_shell_cmd_to_start_graftnoded(h, hosts)
+#            with SSHClient(h) as sc:
+#                try_proc_to_shutdown(sc, h)
+#                print('  ## starting host {}: [{}]'.format(h.name, cmd))
+#                sc.exec_ssh_cmd(cmd)
+
 
 
         #hosts = self.__host_list()
         #for h in hosts:
         #    cmd = mk_shell_cmd_to_start_graftnoded(h, hosts)
         #    with SSHClient(h) as sc:
-        #        try_host_to_shutdown(sc, h)
+        #        try_proc_to_shutdown(sc, h)
         #        print('  ## starting host {}: [{}]'.format(h.name, cmd))
         #        sc.exec_ssh_cmd(cmd)
 
         #with SSHClient(host) as sc:
-        #    try_host_to_shutdown(sc, host)
+        #    try_proc_to_shutdown(sc, host)
 
 

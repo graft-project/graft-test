@@ -7,7 +7,6 @@ from ptlib.host_requester import HostRequester
 from ptlib.report_ctl import ReportController
 from ptlib.host_ctl import HostCtl
 from ptlib.test_run_conf import TestRunConfig
-from math import factorial, pow
 
 class TestSession(object):
     def __init__(self, tests_root_path):
