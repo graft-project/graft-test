@@ -36,7 +36,7 @@ def test_dbg(report_ctl, host_starter):
     #ss.core.exec_get_tunnels_to_node(ss.env.hosts[0])
 
     #ss.host_requester.get_tunnels()
-    #print('arng-cnt: {}:{}'.format(ss.cfg.count_of_arrangement(), ss.cfg.count_of_arrangement_with_self()))
+    print('arng-cnt: {}:{}'.format(ss.cfg.count_of_arrangement(), ss.cfg.count_of_arrangement_with_self()))
 
     #ss.host_log_collector.prepare_log_capture(ss.env.hosts)
 

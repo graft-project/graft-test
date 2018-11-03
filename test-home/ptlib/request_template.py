@@ -57,4 +57,16 @@ class RequestTemplate():
                 }
               }
 
+    sale = {
+	      "jsonrpc":"2.0",
+	      "id":"0",
+	      "method":"sale",
+	      "params": {
+		"Address":"F8C3ZSW9XFHJuz78vqJiFo3S5bnMug8nA8QziJ5YgJtHcFXZZ9QYmXQVut6CkMhoLwXeuhcFdeDUm8dxBKgLRbG7RcA7Fvq",
+		"SaleDetails":"",
+		"PaymentID":"",
+		"Amount": "<payment amount in atomic units serialized into string>"
+	      }
+	    }
+
 
