@@ -3,7 +3,6 @@
 import pytest
 from ptlibx import driver as drv
 from ptlib.snode_stub import SNodeStub as SNodeStub
-import time
 from flask import json, request
 
 ss = drv.session
@@ -19,7 +18,7 @@ def check_result(resp_list, peer_sender, peer_subj):
         break
     return found
 
-#@pytest.mark.skip(reason = 'skip')
+@pytest.mark.skip(reason = 'skip')
 def test_dbg(report_ctl, host_starter):
     print('dbg-test-session is taking off ...')
     #for host in ss.env.hosts:
@@ -48,6 +47,7 @@ def test_dbg(report_ctl, host_starter):
     #        if src.ip == dst.ip:
     #            continue
     #        print('from {} about {}: {}'.format(src.name, dst.name, check_result([], src, dst)))
+
 
 @pytest.mark.skip(reason = 'skip')
 def test(report_ctl, host_starter):

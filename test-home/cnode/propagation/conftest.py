@@ -3,7 +3,7 @@
 import pytest
 import os
 from ptlibx import driver as drv
-from ptlib.host_ctl import GraftProc, ProcPropsBase
+from ptlib.graft_proc import GraftProc, ProcPropsBase
 
 ss = drv.session
 
@@ -14,29 +14,23 @@ ss = drv.session
 @pytest.fixture
 def report_ctl(request):
     ss.core.load_conf_by_current_conftest(__file__, ss.cfg)
-    #ss.report_ctl.start_report()
+    ss.report_ctl.start_report()
     yield
-    #ss.report_ctl.finalize_report()
+    ss.report_ctl.finalize_report()
 
 @pytest.fixture
 def host_starter(request):
-
-    print(len(ss.cfg.nodes))
-
-    ppb = ProcPropsBase('name')
-    ppb.host = ss.cfg.nodes[0]
-    pph = ppb.host
-    print(pph)
-    print(ppb.host)
-
     graft = GraftProc()
-    x1 = graft.noded
+    ss.host_ctl.stop_all(graft.all)
+    #ss.host_ctl.start_all2([graft.server])
 
-    print(x1)
-    print(graft.noded)
-    print(graft.wallet_cli)
+    #hc.start(host_idx, mk_time_stamp_for_test(), mk_remote_path_to_log_dir(cfg.nodes[host_idx]))
 
-    ss.host_ctl.stop_all(graft.wallet_cli)
+    path = ss.core.mk_remote_path_to_log_dir(ss.cfg.nodes[0])
+    graft.noded.pass_args_for_cmd_start(path, ss.report_ctl.time_stamp, ss.cfg.nodes)
+    ss.host_ctl.start_all2([graft.noded])
+
+#, graft.noded
     #ss.host_ctl.start_all()
     yield
     pass
@@ -52,3 +46,16 @@ def host_starter(request):
 
 
 
+    #print(len(ss.cfg.nodes))
+
+    #ppb = ProcPropsBase('name')
+    #ppb.host = ss.cfg.nodes[0]
+    #pph = ppb.host
+    #print(pph)
+    #print(ppb.host)
+
+    #x1 = graft.noded
+
+    #print(x1)
+    #print(graft.noded)
+    #print(graft.wallet_cli)

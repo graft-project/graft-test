@@ -356,21 +356,31 @@ def send_get_tunnels(host, snode_ip = ip_any_local, snode_port = port_srpc):
     print(' # resp: {}'.format(rs))
     dump_to_file('get-tunnels', host.ip, rs)
 
-def send_unicast_request(src, dst):
+
+def send_announce_to_node(host, wait_before_send = 0):
+    send_announce(host, ip_n0)
+
+def send_unicast_request(src, dst, wait_before_send = 0):
+    if wait_before_send:
+        time.sleep(wait_before_send)
     url, jo, hdrs = mk_unicast_request(src, dst)
     log.info('Node RPC url: {}'.format(url))
     log.info('JSON to send: {}'.format(json.dumps(jo)))
     r = requests.post(url, json = jo, headers = hdrs)
     print(' # resp: {}'.format(r.json()))
 
-def send_broadcast_request(src):
+def send_broadcast_request(src, wait_before_send = 0):
+    if wait_before_send:
+        time.sleep(wait_before_send)
     url, jo, hdrs = mk_broadcast_request(src)
     log.info('Node RPC url: {}'.format(url))
     log.info('JSON to send: {}'.format(json.dumps(jo)))
     r = requests.post(url, json = jo, headers = hdrs)
     print(' # resp: {}'.format(r.json()))
 
-def send_multicast_request(src, dst_list):
+def send_multicast_request(src, dst_list, wait_before_send = 0):
+    if wait_before_send:
+        time.sleep(wait_before_send)
     url, jo, hdrs = mk_multicast_request(src, dst_list)
     log.info('Node RPC url: {}'.format(url))
     log.info('JSON to send: {}'.format(json.dumps(jo)))
@@ -522,8 +532,8 @@ def exec_node_down_3():
     exec_ssh_cmd(cmd_node_3_down, host3)
 
 
-def send_unicast(src, dst):
-    send_unicast_request(src, dst)
+def send_unicast(src, dst, wait_before_send = 0):
+    send_unicast_request(src, dst, wait_before_send)
 
 def exec_send_unicast_12():
     send_unicast_request(host1, host2)
@@ -543,8 +553,8 @@ def exec_send_unicast_23():
 def exec_send_unicast_32():
     send_unicast_request(host3, host2)
 
-def send_broadcast_from(host):
-    send_broadcast_request(host)
+def send_broadcast_from(host, wait_before_send = 0):
+    send_broadcast_request(host, wait_before_send)
 
 def exec_send_broadcast_1():
     send_broadcast_request(host1)
@@ -555,13 +565,13 @@ def exec_send_broadcast_2():
 def exec_send_broadcast_3():
     send_broadcast_request(host3)
 
-def send_multicast_from(host):
+def send_multicast_from(host, host_list, wait_before_send = 0):
     dst_list = []
-    for h in env_desc:
+    for h in host_list:
         if h.ip == host.ip:
             continue
         dst_list.append(h)
-    send_multicast_request(host, dst_list)
+    send_multicast_request(host, dst_list, wait_before_send)
 
 def exec_send_multicast_123():
     send_multicast_request(host1, [host2, host3])

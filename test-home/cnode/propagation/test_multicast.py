@@ -3,8 +3,9 @@
 import pytest
 from ptlibx import driver as drv
 from ptlib.snode_stub import SNodeStub as SNodeStub
-import time
 from flask import json, request
+
+ss = drv.session
 
 def check_result(resp_list, peer_src, peer_dst):
     found = False
@@ -19,19 +20,10 @@ def check_result(resp_list, peer_src, peer_dst):
         break
     return found
 
-#@pytest.mark.skip(reason = 'skip')
-def test(host_ctl):
+@pytest.mark.skip(reason = 'skip')
+def test(report_ctl, host_starter):
     tn = 'multicast'
     print('\n  ##  {} test is beginning ...'.format(tn))
-
-    p1 = 2
-    p2 = 2
-
-    p1 = 15
-    p2 = 3
-
-    p1 = 10
-    p2 = 3
 
     ns = SNodeStub(tn)
 
@@ -45,33 +37,41 @@ def test(host_ctl):
 
     ns.run()
 
-    for host in drv.core().env_desc:
-        time.sleep(p1)
-        drv.core().send_announce_to_node(host)
+    for host in ss.cfg.nodes:
+        ss.core.send_announce_to_node(host, ss.cfg.wait['between_announces'])
 
-    time.sleep(p1)
+    time.sleep(ss.cfg.wait['between_announces'])
     received = len(ns.resp_list)
     print('\n  ##  reqs done by now: {}'.format(received))
 
-    ns.cnt_resp_to_collect = received + 6
+    ns.cnt_resp_to_collect = received + ss.cfg.count_of_arrangement()
 
-    for host in drv.core().env_desc:
-        time.sleep(p2)
-        drv.core().send_multicast_from(host)
+    for host in ss.cfg.nodes:
+        ss.core.send_multicast_from(host, ss.cfg.nodes, ss.cfg.wait['between_test_request'])
 
     ns.wait_till_complete(3)
 
     print('{}'.format(json.dumps(ns.resp_list, indent = 2)))
 
-    for src in drv.core().env_desc:
-        for dst in drv.core().env_desc:
+    for src in ss.cfg.nodes:
+        for dst in ss.cfg.nodes:
             if src.ip == dst.ip:
                 continue
             print('{} --> {}: {}'.format(src.name, dst.name, check_result(ns.resp_list, src, dst)))
 
-    for src in drv.core().env_desc:
-        for dst in drv.core().env_desc:
+    for src in ss.cfg.nodes:
+        for dst in ss.cfg.nodes:
             if src.ip == dst.ip:
                 continue
             assert check_result(ns.resp_list, src, dst)
+
+#p1 = 2
+#p2 = 2
+#
+#p1 = 15
+#p2 = 3
+#
+#p1 = 10
+#p2 = 3
+
 
