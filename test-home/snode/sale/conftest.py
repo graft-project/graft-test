@@ -3,28 +3,9 @@
 import pytest
 import os
 from ptlibx import driver as drv
+from ptlib.graft_proc import GraftProc, ProcPropsBase
 
 ss = drv.session
-
-#@pytest.fixture(scope = 'session', autouse = True)
-#def session_ctl(request):
-#    print('\nsession_ctl started ...')
-
-
-@pytest.fixture
-def host_starter(request):
-    ss.host_ctl.start_all()
-    yield
-    pass
-
-#@pytest.fixture
-#def host_ctl(request):
-#    hosts = ss.cfg.nodes
-#    for h in hosts:
-#        ss.core.mk_host_down(h)
-#        ss.core.mk_host_up(h)
-#    yield
-#    pass
 
 @pytest.fixture
 def report_ctl(request):
@@ -33,4 +14,15 @@ def report_ctl(request):
     yield
     ss.report_ctl.finalize_report()
 
+@pytest.fixture
+def host_starter(request):
+    graft = GraftProc()
+    ss.host_ctl.stop_all(graft.all)
+
+    path = ss.core.mk_remote_path_to_log_dir(ss.cfg.nodes[0])
+    graft.noded.pass_args_for_cmd_start(path, ss.report_ctl.time_stamp, ss.cfg.nodes)
+    ss.host_ctl.start_all2([graft.noded, graft.server])
+
+    yield
+    pass
 

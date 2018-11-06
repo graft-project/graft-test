@@ -50,6 +50,9 @@ class SuperNodeStub(Flask):
         done = len(self.resp_list)
         return (need <= done) if need else False
 
+    def wait(self, wait_sec):
+        time.sleep(wait_sec)
+
     def wait_till_complete(self, wait_sec = 0):
         now = datetime.datetime.now()
         dead_line = now + datetime.timedelta(seconds = wait_sec) if wait_sec else now + datetime.timedelta(minutes = 5)

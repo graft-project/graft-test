@@ -69,7 +69,7 @@ def test(report_ctl, host_starter):
 
     #ss.host_requester.get_tunnels()
 
-    time.sleep(ss.cfg.wait['between_announces'])
+    ns.wait(ss.cfg.wait['between_announces'])
     received = len(ns.resp_list)
     print('\n  ##  reqs done by now: {}'.format(received))
 

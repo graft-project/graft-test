@@ -20,7 +20,7 @@ def check_result(resp_list, peer_src, peer_dst):
         break
     return found
 
-#@pytest.mark.skip(reason = 'skip')
+@pytest.mark.skip(reason = 'skip')
 def test(report_ctl, host_starter):
     tn = 'unicast'
     print('\n  ##  {} test is beginning ...'.format(tn))
@@ -40,7 +40,7 @@ def test(report_ctl, host_starter):
     for host in ss.cfg.nodes:
         ss.core.send_announce_to_node(host, ss.cfg.wait['between_announces'])
 
-    time.sleep(ss.cfg.wait['between_announces'])
+    ns.wait(ss.cfg.wait['between_announces'])
     received = len(ns.resp_list)
     print('\n  ##  reqs done by now: {}'.format(received))
 

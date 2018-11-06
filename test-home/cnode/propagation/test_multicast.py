@@ -40,7 +40,7 @@ def test(report_ctl, host_starter):
     for host in ss.cfg.nodes:
         ss.core.send_announce_to_node(host, ss.cfg.wait['between_announces'])
 
-    time.sleep(ss.cfg.wait['between_announces'])
+    ns.wait(ss.cfg.wait['between_announces'])
     received = len(ns.resp_list)
     print('\n  ##  reqs done by now: {}'.format(received))
 

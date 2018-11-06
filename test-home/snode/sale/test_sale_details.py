@@ -18,12 +18,11 @@ def check_result(resp_list, peer_sender, peer_subj):
         break
     return found
 
-@pytest.mark.skip(reason = 'skip')
+#ss.host_requester.get_tunnels()
+#@pytest.mark.skip(reason = 'skip')
 def test(report_ctl, host_starter):
     tn = 'sale-sale-details'
     print('\n  ##  {} test is beginning ...'.format(tn))
-
-    #ss.host_requester.get_tunnels()
 
     ns = SNodeStub(tn)
 
@@ -36,18 +35,14 @@ def test(report_ctl, host_starter):
     for host in ss.cfg.nodes:
         ss.core.send_announce_to_node(host, ss.cfg.wait['between_announces'])
 
-    #ss.host_requester.get_tunnels()
-
-    time.sleep(ss.cfg.wait['between_announces'])
+    ns.wait(ss.cfg.wait['between_announces'])
     received = len(ns.resp_list)
     print('\n  ##  reqs done by now: {}'.format(received))
 
     ns.cnt_resp_to_collect = received + ss.cfg.count_of_arrangement()
 
-    #ss.host_requester.get_tunnels()
     for host in ss.cfg.nodes:
         ss.core.send_announce_to_node(host, ss.cfg.wait['between_test_request'])
-        #ss.host_requester.get_tunnels()
 
     ns.wait_till_complete(3)
 
