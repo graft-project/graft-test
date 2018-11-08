@@ -3,7 +3,6 @@
 import pytest
 import os
 from ptlibx import driver as drv
-from ptlib.graft_proc import GraftProc, ProcPropsBase
 
 ss = drv.session
 
@@ -20,15 +19,12 @@ def report_ctl(request):
 
 @pytest.fixture
 def host_starter(request):
-    graft = GraftProc()
-    ss.host_ctl.stop_all(graft.all)
+    ss.host_ctl.stop_all(ss.graft_proc.all)
     #ss.host_ctl.start_all2([graft.server])
-
     #hc.start(host_idx, mk_time_stamp_for_test(), mk_remote_path_to_log_dir(cfg.nodes[host_idx]))
-
     path = ss.core.mk_remote_path_to_log_dir(ss.cfg.nodes[0])
-    graft.noded.pass_args_for_cmd_start(path, ss.report_ctl.time_stamp, ss.cfg.nodes)
-    ss.host_ctl.start_all2([graft.noded])
+    ss.graft_proc.noded.pass_args_for_cmd_start(path, ss.report_ctl.time_stamp, ss.cfg.nodes)
+    ss.host_ctl.start_all2([ss.graft_proc.noded])
 
 #, graft.noded
     #ss.host_ctl.start_all()

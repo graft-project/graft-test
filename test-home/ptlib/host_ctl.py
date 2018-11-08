@@ -52,6 +52,20 @@ class HostCtl(object):
                 t.join()
 
 
+    def thread_mining_start(self, proc):
+        with SSHClient(proc.host) as sc:
+            print('  ## mininig is starting ... {}:{}: [{}]'.format(proc.host.name, proc.name, proc.cmd_mining_start))
+            sc.exec_ssh_cmd(proc.cmd_mining_start)
+
+    def mining_start(self, graftnoded_proc):
+        threads = self.do_action_in_parallel(self.thread_mining_start, graftnoded_proc)
+        for t in threads:
+            t.join()
+
+        #for proc in proc_list:
+        #    threads = self.do_action_in_parallel(self.thread_start_all2, proc)
+        #    for t in threads:
+        #        t.join()
         #, test_time_stamp, remote_path_to_log
         #kwargs = { 'test_time_stamp': test_time_stamp, 'remote_path_to_log': remote_path_to_log }
         #threads = self.do_action_in_parallel(self.thread_start_all2, **kwargs)

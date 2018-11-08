@@ -7,6 +7,8 @@ from ptlib.host_requester import HostRequester
 from ptlib.report_ctl import ReportController
 from ptlib.host_ctl import HostCtl
 from ptlib.test_run_conf import TestRunConfig
+from ptlib.graft_proc import GraftProc
+#, ProcPropsBase
 
 class TestSession(object):
     def __init__(self, tests_root_path):
@@ -18,6 +20,7 @@ class TestSession(object):
         self.__report_ctl = ReportController(os.getcwd(), self.__hlc, lambda: self.__cfg.nodes)
         self.__hrq = HostRequester(lambda: self.__cfg.nodes, lambda: self.__report_ctl.current_report_requests_path, drv)
         self.__host_ctl = HostCtl(lambda: self.__cfg.nodes)
+        self.__graft_proc = GraftProc()
 
     @property
     def core(self):
@@ -43,4 +46,7 @@ class TestSession(object):
     def report_ctl(self):
         return self.__report_ctl
 
+    @property
+    def graft_proc(self):
+        return self.__graft_proc
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 log_file=graft.log
+sn_log=graft-server.log
 prev_log_pfx=.prev
 
 echo $log_file
@@ -10,10 +11,10 @@ shutdown_graft()
 {
   max_kill_attempt=3
   kill_try=0
-  while pgrep tmuxs;
+  while pgrep graft;
   do
     sleep 1
-    echo 'pkill graft'
+    pkill -f graft
     if (($kill_try++ > $max_kill_attempt));
     then
       echo 'too much failed attempts ...'
@@ -42,16 +43,23 @@ md()
 backup_old_and_new_log()
 {
   arc_name=$1
+
   if [ $arc_name ] && [ -f $log_file ]; then
-    shutdown_graft
-    echo 'func-2' , "$arc_name"
+    #shutdown_graft
+    #echo 'func-2' , "$arc_name"
     md $arc_name
+
+    if [ -f $sn_log ]; then
+      cp $sn_log $arc_name
+    fi
+
     if [ -f $log_file ]; then
-      mv $log_file $arc_name
+      cp $log_file $arc_name
 
       if [ -f $log_file$prev_log_pfx ]; then
         mv $log_file$prev_log_pfx $arc_name
       fi
+
       tar cJf $arc_name.txz $arc_name
       rm -rf ./$arc_name
     fi

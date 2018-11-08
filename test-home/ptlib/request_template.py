@@ -45,28 +45,41 @@ class RequestTemplate():
                 }
 
     unicast = {
-                "jsonrpc":"2.0",
-                "id":"0",
-                "method":"unicast",
-                "params": {
-                  "sender_address":"F8C3ZSW9XFHJuz78vqJiFo3S5bnMug8nA8QziJ5YgJtHcFXZZ9QYmXQVut6CkMhoLwXeuhcFdeDUm8dxBKgLRbG7RcA7Fvq",
-                  "receiver_address":"FAemK2QsWwsDAxgCKsTJUbhk1XwAu1eg4eVkYNbYSkQzLP8wobvgG7ia1tXcpSY6k4f7rFmypq6wHKT4fYJJ3XFL1KRgNrj",
-                  "callback_uri":"",
-                  "data":"eyJQYXltZW50SUQiOiI2MGU2YTYyMC04NWE2LTQ3OGQtODAyZC02ZGIwNzEzNzQwMWYiLCJCbG9ja051bWJlciI6MTc2MX0=",
-                  "wait_answer": False
-                }
-              }
+      "jsonrpc":"2.0",
+      "id":"0",
+      "method":"unicast",
+      "params": {
+        "sender_address":"F8C3ZSW9XFHJuz78vqJiFo3S5bnMug8nA8QziJ5YgJtHcFXZZ9QYmXQVut6CkMhoLwXeuhcFdeDUm8dxBKgLRbG7RcA7Fvq",
+        "receiver_address":"FAemK2QsWwsDAxgCKsTJUbhk1XwAu1eg4eVkYNbYSkQzLP8wobvgG7ia1tXcpSY6k4f7rFmypq6wHKT4fYJJ3XFL1KRgNrj",
+        "callback_uri":"",
+        "data":"eyJQYXltZW50SUQiOiI2MGU2YTYyMC04NWE2LTQ3OGQtODAyZC02ZGIwNzEzNzQwMWYiLCJCbG9ja051bWJlciI6MTc2MX0=",
+        "wait_answer": False
+      }
+    }
 
     sale = {
-	      "jsonrpc":"2.0",
-	      "id":"0",
-	      "method":"sale",
-	      "params": {
-		"Address":"F8C3ZSW9XFHJuz78vqJiFo3S5bnMug8nA8QziJ5YgJtHcFXZZ9QYmXQVut6CkMhoLwXeuhcFdeDUm8dxBKgLRbG7RcA7Fvq",
-		"SaleDetails":"",
-		"PaymentID":"",
-		"Amount": "<payment amount in atomic units serialized into string>"
-	      }
-	    }
+      "jsonrpc":"2.0",
+      "id":"0",
+      "method":"sale",
+      "params": {
+        "Address":"F8C3ZSW9XFHJuz78vqJiFo3S5bnMug8nA8QziJ5YgJtHcFXZZ9QYmXQVut6CkMhoLwXeuhcFdeDUm8dxBKgLRbG7RcA7Fvq",
+        "SaleDetails":"",
+        "PaymentID":"",
+        "Amount": 250
+      }
+    }
+
+    sale_details = {
+      "jsonrpc":"2.0",
+      "id":"0",
+      "method":"sale_details",
+      "params": {
+        "PaymentID":"",
+        "BlockNumber": 250
+      }
+    }
+
+
+
 
 

@@ -109,6 +109,11 @@ class ProcPropsGraftnoded(ProcPropsBase):
     def prepare_to_start(self):
         self.__prestart_action_complete = False
 
+    @property
+    def cmd_mining_start(self):
+        test_suite_conf_file_name = os.path.join(self.__path, 'graft.conf.{}'.format(self.__time_stamp))
+        return mk_shell_cmd_to_start_mining_with_config(self.host, test_suite_conf_file_name)
+
 
 class ProcPropsWalletCLI(ProcPropsBase):
     def __init__(self):
@@ -247,7 +252,14 @@ def mk_shell_param_exclusive_node_list(host, host_list):
 
 def mk_shell_cmd_to_start_graftnoded_with_config(host, cfg_file_name):
     full_file_name = '/home/{}/projects/graft/bin/graftnoded'.format(host.user)
-    return full_file_name + ' --testnet --detach --config-file ' + cfg_file_name
+    cmd = full_file_name + ' --testnet --detach --config-file ' + cfg_file_name
+    return cmd
+
+def mk_shell_cmd_to_start_mining_with_config(host, cfg_file_name):
+    full_file_name = '/home/{}/projects/graft/bin/graftnoded'.format(host.user)
+    cmd = full_file_name + ' --testnet --config-file ' + cfg_file_name + ' start_mining ' + host.wallet
+    cmd += ' do_background_mining'
+    return cmd
 
 def mk_shell_cmd_to_start_graftnoded(host, host_list = []):
     full_file_name = '/home/{}/projects/graft/bin/graftnoded'.format(host.user)

@@ -23,6 +23,9 @@ class Host(NamedTuple):
     wallet: str
     port_nrpc: int
 
+def wait(wait_sec):
+    time.sleep(wait_sec)
+
 def load_config(path, conf_file, conf_obj):
     conf = os.path.join(path, conf_file)
 
@@ -222,9 +225,30 @@ def mk_netw_addr(ip_addr, port):
     return ip_addr + ':' + str(port) + '/dapi/v2.0'
 #"network_address":"54.226.23.229:28690/dapi/v2.0"
 
+def mk_snode_rpc_dapi2_url(host, method):
+    return 'http://' + host.ip + ':' + str(port_srpc) + '/dapi/v2.0/' + method
+
+
 def mk_full_file_name_from_local_name(file_name):
     path = os.path.dirname(os.path.realpath(__file__))
     return os.path.join(path, file_name)
+
+def mk_sale_request(src):
+    jo = json.loads(json.dumps(RequestTemplate.sale))
+    jo['params']['Address'] = src.wallet
+
+    url = mk_snode_rpc_dapi2_url(src, 'sale')
+    hdrs = {'Content-Type':'application/json'}
+    return url, jo, hdrs
+
+def mk_sale_details_request(src, pay_id, block_num):
+    jo = json.loads(json.dumps(RequestTemplate.sale_details))
+    jo['params']['PaymentID'] = pay_id
+    jo['params']['BlockNumber'] = block_num
+
+    url = mk_snode_rpc_dapi2_url(src, 'sale_details')
+    hdrs = {'Content-Type':'application/json'}
+    return url, jo, hdrs
 
 def mk_unicast_request(src, dst):
     jo = json.loads(json.dumps(RequestTemplate.unicast))
@@ -357,6 +381,7 @@ def send_get_tunnels(host, snode_ip = ip_any_local, snode_port = port_srpc):
     dump_to_file('get-tunnels', host.ip, rs)
 
 
+
 def send_announce_to_node(host, wait_before_send = 0):
     send_announce(host, ip_n0)
 
@@ -386,6 +411,63 @@ def send_multicast_request(src, dst_list, wait_before_send = 0):
     log.info('JSON to send: {}'.format(json.dumps(jo)))
     r = requests.post(url, json = jo, headers = hdrs)
     print(' # resp: {}'.format(r.json()))
+
+def send_sale_request(src, wait_before_send = 0):
+    if wait_before_send:
+        time.sleep(wait_before_send)
+    url, jo, hdrs = mk_sale_request(src)
+    log.info('SNode RPC url: {}'.format(url))
+    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    r = requests.post(url, json = jo, headers = hdrs)
+    print(' # resp: {}'.format(r.json()))
+    return r.json()
+
+def send_sale_details_request(src, pay_id, block_num, wait_before_send = 0):
+    if wait_before_send:
+        time.sleep(wait_before_send)
+    url, jo, hdrs = mk_sale_details_request(src, pay_id, block_num)
+    log.info('SNode RPC url: {}'.format(url))
+    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    r = requests.post(url, json = jo, headers = hdrs)
+    #print(' # resp: {}'.format(r.json()))
+    return r.json()
+
+def parse_sale_response(sale_resp):
+    pass
+
+def sale_resp_is_ok(sale_resp):
+    hit = 'result' in sale_resp
+    return hit
+
+def sale_resp_is_err(sale_resp):
+    hit = 'error' in sale_resp
+    return hit
+
+def sale_resp_get_result(sale_resp):
+    o = sale_resp['result']
+    pay_id = o['PaymentID']
+    block_num = o['BlockNumber']
+    return pay_id, block_num
+
+def sale_resp_get_err(sale_resp):
+    o = sale_resp['error']
+    code = o['code']
+    msg = o['message']
+    return code, msg
+
+def sale_datails_resp_is_ok(sd_resp):
+    hit = 'result' in sd_resp
+    return hit
+
+def sale_datails_resp_is_err(sd_resp):
+    hit = 'error' in sd_resp
+    return hit
+
+def sale_details_resp_get_err(sd_resp):
+    o = sd_resp['error']
+    code = o['code']
+    msg = o['message']
+    return code, msg
 
 def there_is_running_graft(graft_grep_result, graft_launch_cmd):
     if graft_grep_result:
