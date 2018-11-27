@@ -1,0 +1,39 @@
+{
+  "nodes":
+  [
+    {
+      "name": "gn01",
+      "user": "ubuntu",
+      "ip": "54.226.23.229",
+      "port_nrpc": "28681",
+      "wallet": "F4KrqowwEoY6K9J8dV75toToyYYmHdMbkWgFCm4A9uMhND3uGtnMFU4gAGLBVYFEbz2zC9jrVvCS96x3HUcy6nAd4q4Robb"
+    },
+    {
+      "name": "gn02",
+      "user": "ubuntu",
+      "ip": "54.197.32.149",
+      "port_nrpc": "28681",
+      "wallet": "F43mWaMKqTM5uhxG2kjyrRS9QBEGYS9PmbEUBYQjkEd51U9ThEeKvjDFYxr7pSkd5WLZKLj7Go1FsEP2uLY8RrCTPnnnJ7n"
+    },
+    {
+      "name": "gn03",
+      "user": "ubuntu",
+      "ip": "52.90.236.226",
+      "port_nrpc": "28681",
+      "wallet": "F5ciEZFQzy7Ln4QDtqR4d415ih6gBHtb8CY8gPDF97iiKwRfGmLZ5yJMGYtKvDZaWDVng4pjpdN9eY9c3vkA8a44Km89Wfx"
+    },
+    {
+      "name": "gn04",
+      "user": "ubuntu",
+      "ip": "34.204.90.5",
+      "port_nrpc": "28681",
+      "wallet": "FDLseu2r6H3Aajg6TfMnSQAx1o5oniBTrgXMurKuUuRM8mjZUhe2wD6YefPDi4qV61M9romH44oQZcjVzCrLqAtBLz1eDkK"
+    }
+  ],
+  "wait":
+  {
+    "between_announces": 10,
+    "between_test_request": 1
+  }
+}
+

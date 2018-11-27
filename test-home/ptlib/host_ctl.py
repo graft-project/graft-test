@@ -8,7 +8,6 @@ import threading
 import copy
 #from typing import NamedTuple
 
-
 def try_proc_to_shutdown(ssh_client, proc):
     kill_host_max_attempt_cnt = 10
     while proc.is_up(ssh_client):

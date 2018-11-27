@@ -26,7 +26,7 @@ def cond_sale_det(host_name, host_name2):
     req = 'sail-details'
     return host_name + '-' + req + '-' + host_name2
 
-#@pytest.mark.skip(reason = 'skip')
+@pytest.mark.skip(reason = 'skip')
 def test_dbg(report_ctl, host_starter):
     tn = 'sale-sale-details-DBG'
     print('\n  ##  {} test is beginning ...'.format(tn))
@@ -38,10 +38,11 @@ def test_dbg(report_ctl, host_starter):
     ss.host_ctl.mining_start(ss.graft_proc.noded)
     ss.core.wait(p)
 
+    amount = 500 * 1000
     check_list = set()
     for h in ss.cfg.nodes:
         print('\n\n  ================ sale for {}'.format(h.name))
-        sale_resp = ss.core.send_sale_request(h, 1)
+        sale_resp = ss.core.send_sale_request(h, amount, 1)
         if ss.core.sale_resp_is_ok(sale_resp):
             check_list.add(cond_sale(h.name))
             print('  ##  sale-resp for {} is OK'.format(h.name))
@@ -76,47 +77,5 @@ def test_dbg(report_ctl, host_starter):
         for hh in ss.cfg.nodes:
             assert (cond_sale_det(h.name, hh.name) in check_list)
 
-
-#ss.host_requester.get_tunnels()
-@pytest.mark.skip(reason = 'skip')
-def test(report_ctl, host_starter):
-    tn = 'sale-sale-details'
-    print('\n  ##  {} test is beginning ...'.format(tn))
-
-    ns = SNodeStub(tn)
-
-    @ns.route('/dapi/v2.0/send_supernode_announce', methods=['POST'])
-    def on_req():
-        return ns.build_custom_default_response()
-
-    ns.run()
-
-    for host in ss.cfg.nodes:
-        ss.core.send_announce_to_node(host, ss.cfg.wait['between_announces'])
-
-    ns.wait(ss.cfg.wait['between_announces'])
-    received = len(ns.resp_list)
-    print('\n  ##  reqs done by now: {}'.format(received))
-
-    ns.cnt_resp_to_collect = received + ss.cfg.count_of_arrangement()
-
-    for host in ss.cfg.nodes:
-        ss.core.send_announce_to_node(host, ss.cfg.wait['between_test_request'])
-
-    ns.wait_till_complete(3)
-
-    print('{}'.format(json.dumps(ns.resp_list, indent = 2)))
-
-    for src in ss.cfg.nodes:
-        for dst in ss.cfg.nodes:
-            if src.ip == dst.ip:
-                continue
-            print('from {} about {}: {}'.format(src.name, dst.name, check_result(ns.resp_list, src, dst)))
-
-    for src in ss.cfg.nodes:
-        for dst in ss.cfg.nodes:
-            if src.ip == dst.ip:
-                continue
-            assert check_result(ns.resp_list, src, dst)
 
 

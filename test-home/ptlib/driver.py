@@ -118,6 +118,8 @@ ip_any_local = '0.0.0.0'
 
 port_nrpc = 28681
 port_srpc = 28690
+#port_wrpc = 29982
+port_wrpc = 28982
 
 port_srpc1 = 28691
 port_srpc2 = 28692
@@ -214,12 +216,24 @@ def mk_shell_cmd_for_start_graftnoded(host):
 def mk_node_rpc_url(ip_addr, port):
     return 'http://' + ip_addr + ':' + str(port) + '/json_rpc'
 
+def mk_node_rpc_url_by_host(host):
+    return mk_node_rpc_url(host.ip, port_nrpc)
+
+
+def mk_wallet_rpc_url(ip_addr, port):
+    return 'http://' + ip_addr + ':' + str(port) + '/json_rpc'
+
+def mk_wallet_rpc_url_by_host(host):
+    return mk_wallet_rpc_url(host.ip, port_wrpc)
+
+
 def mk_node_rpc_rta_url(ip_addr, port):
     return 'http://' + ip_addr + ':' + str(port) + '/json_rpc/rta'
 
 def mk_node_rpc_rta_url_by_host(host):
     return mk_node_rpc_rta_url(host.ip, port_nrpc)
     #return 'http://' + host.ip + ':' + str(port) + '/json_rpc/rta'
+
 
 def mk_netw_addr(ip_addr, port):
     return ip_addr + ':' + str(port) + '/dapi/v2.0'
@@ -233,22 +247,32 @@ def mk_full_file_name_from_local_name(file_name):
     path = os.path.dirname(os.path.realpath(__file__))
     return os.path.join(path, file_name)
 
-def mk_sale_request(src):
+def default_rpc_req_headers():
+    return {'Content-Type':'application/json'}
+
+def mk_sale_request(src, amount):
     jo = json.loads(json.dumps(RequestTemplate.sale))
     jo['params']['Address'] = src.wallet
+    jo['params']['Amount'] = amount
 
-    url = mk_snode_rpc_dapi2_url(src, 'sale')
-    hdrs = {'Content-Type':'application/json'}
-    return url, jo, hdrs
+    return mk_snode_rpc_dapi2_url(src, 'sale'), jo, default_rpc_req_headers()
 
 def mk_sale_details_request(src, pay_id, block_num):
     jo = json.loads(json.dumps(RequestTemplate.sale_details))
     jo['params']['PaymentID'] = pay_id
     jo['params']['BlockNumber'] = block_num
 
-    url = mk_snode_rpc_dapi2_url(src, 'sale_details')
-    hdrs = {'Content-Type':'application/json'}
-    return url, jo, hdrs
+    return mk_snode_rpc_dapi2_url(src, 'sale_details'), jo, default_rpc_req_headers()
+
+def mk_pay_request(src, merchant_addr, pay_id, block_num, amount, tx):
+    jo = json.loads(json.dumps(RequestTemplate.pay))
+    jo['params']['Address'] = merchant_addr
+    jo['params']['PaymentID'] = pay_id
+    jo['params']['BlockNumber'] = block_num
+    jo['params']['Amount'] = amount
+    jo['params']['Transactions'] = [tx]
+
+    return mk_snode_rpc_dapi2_url(src, 'pay'), jo, default_rpc_req_headers()
 
 def mk_unicast_request(src, dst):
     jo = json.loads(json.dumps(RequestTemplate.unicast))
@@ -256,18 +280,14 @@ def mk_unicast_request(src, dst):
     jo['params']['receiver_address'] = dst.wallet
     jo['params']['data'] = '{}:{}'.format(src.ip, get_hires_timestamp())
 
-    url = mk_node_rpc_rta_url_by_host(src)
-    hdrs = {'Content-Type':'application/json'}
-    return url, jo, hdrs
+    return mk_node_rpc_rta_url_by_host(src), jo, default_rpc_req_headers()
 
 def mk_broadcast_request(src):
     jo = json.loads(json.dumps(RequestTemplate.broadcast))
     jo['params']['sender_address'] = src.wallet
     jo['params']['data'] = '{}:{}'.format(src.ip, get_hires_timestamp())
 
-    url = mk_node_rpc_rta_url_by_host(src)
-    hdrs = {'Content-Type':'application/json'}
-    return url, jo, hdrs
+    return mk_node_rpc_rta_url_by_host(src), jo, default_rpc_req_headers()
 
 def mk_multicast_request(src, dst_list):
     jo = json.loads(json.dumps(RequestTemplate.multicast))
@@ -279,9 +299,13 @@ def mk_multicast_request(src, dst_list):
       dst_wallets.append(h.wallet)
     jo['params']['receiver_addresses'] = dst_wallets
 
-    url = mk_node_rpc_rta_url_by_host(src)
-    hdrs = {'Content-Type':'application/json'}
-    return url, jo, hdrs
+    return mk_node_rpc_rta_url_by_host(src), jo, default_rpc_req_headers()
+
+def mk_transfer_rta_request(src, dst_list):
+    jo = json.loads(json.dumps(RequestTemplate.transfer_rta))
+    jo['params']['destinations'] = dst_list
+
+    return mk_wallet_rpc_url_by_host(src), jo, default_rpc_req_headers()
 
 def inc_timestamp(json_obj):
     json_obj['params']['timestamp'] = get_next_timestamp()
@@ -336,8 +360,7 @@ def send_announce(host, snode_ip = ip_any_local, snode_port = port_srpc):
 
     url_nrpc = mk_node_rpc_rta_url_by_host(host)
     log.info('Node RPC url: {}'.format(url_nrpc))
-    hdrs = {'Content-Type':'application/json'}
-    r = requests.post(url_nrpc, json = jo, headers = hdrs)
+    r = requests.post(url_nrpc, json = jo, headers = default_rpc_req_headers())
     print(' # resp: {}'.format(r.json()))
     #print(' # resp: {}'.format(json.dumps(r.json(), indent = 2)))
 
@@ -348,8 +371,7 @@ def send_get_connections(ip_addr, port, snode_ip = ip_any_local, snode_port = po
     json_req = {"jsonrpc":"2.0","id":"0","method":"get_connections"}
     log.info('JSON to send: {}'.format(json.dumps(json_req)))
 
-    hdrs = {'Content-Type':'application/json'}
-    r = requests.post(url_nrpc, json = json_req, headers = hdrs)
+    r = requests.post(url_nrpc, json = json_req, headers = default_rpc_req_headers())
     rs = r.content
     rs = r.text
     print(' # resp: {}'.format(rs))
@@ -412,10 +434,10 @@ def send_multicast_request(src, dst_list, wait_before_send = 0):
     r = requests.post(url, json = jo, headers = hdrs)
     print(' # resp: {}'.format(r.json()))
 
-def send_sale_request(src, wait_before_send = 0):
+def send_sale_request(src, amount, wait_before_send = 0):
     if wait_before_send:
         time.sleep(wait_before_send)
-    url, jo, hdrs = mk_sale_request(src)
+    url, jo, hdrs = mk_sale_request(src, amount)
     log.info('SNode RPC url: {}'.format(url))
     log.info('JSON to send: {}'.format(json.dumps(jo)))
     r = requests.post(url, json = jo, headers = hdrs)
@@ -468,6 +490,26 @@ def sale_details_resp_get_err(sd_resp):
     code = o['code']
     msg = o['message']
     return code, msg
+
+def send_transfer_rta_request(src, dst_list, wait_before_send = 0):
+    if wait_before_send:
+        time.sleep(wait_before_send)
+    url, jo, hdrs = mk_transfer_rta_request(src, dst_list)
+    log.info('SNode RPC url: {}'.format(url))
+    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    r = requests.post(url, json = jo, headers = hdrs)
+    #print(' # resp: {}'.format(r.json()))
+    return r.json()
+
+def send_pay_request(src, merchant_addr, pay_id, block_num, amount, tx, wait_before_send = 0):
+    if wait_before_send:
+        time.sleep(wait_before_send)
+    url, jo, hdrs = mk_pay_request(src, merchant_addr, pay_id, block_num, amount, tx)
+    log.info('SNode RPC url: {}'.format(url))
+    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    r = requests.post(url, json = jo, headers = hdrs)
+    #print(' # resp: {}'.format(r.json()))
+    return r.json()
 
 def there_is_running_graft(graft_grep_result, graft_launch_cmd):
     if graft_grep_result:

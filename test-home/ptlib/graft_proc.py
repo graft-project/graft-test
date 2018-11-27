@@ -6,6 +6,8 @@ cmd_grep_graft = 'ps aux | grep -v grep | grep graft'
 cmd_grep_graftnoded = 'ps aux | grep -v grep | grep graftnoded'
 cmd_kill_graft = 'pkill graft'
 ip_any_local = '0.0.0.0'
+#port_wrpc = 29982
+port_wrpc = 28982
 
 #  Ports
 #    8081 - block explorer port
@@ -124,6 +126,21 @@ class ProcPropsWalletCLI(ProcPropsBase):
         sys.exit('ProcPropsWalletCLI::cmd_start - NOT IMPLEMENTED')
 
 
+class ProcPropsWalletRPC(ProcPropsBase):
+    def __init__(self):
+        super().__init__('graft-wallet-rpc')
+        self.__cmd_start_cache = None
+
+    @property
+    def cmd_start(self):
+        return self.__cmd_start_cache
+
+    def do_prestart_action(self, ssh_client):
+        self.__cmd_start_cache = mk_shell_cmd_to_start_wallet_rpc(self.name, self.host)
+        #nohup ./graft-wallet-rpc --log-level 2 --disable-rpc-login  --confirm-external-bind
+        #--daemon-address 18.214.197.50:28681 --rpc-bind-port 29982 --rpc-bind-ip 172.31.83.52
+        #--testnet  --wallet-file test_wallet --password "testpass"  > /dev/null 2>&1 &
+
 class ProcPropsGraftServer(ProcPropsBase):
     def __init__(self):
         super().__init__('graft_server')
@@ -139,17 +156,22 @@ class ProcPropsGraftServer(ProcPropsBase):
 
 class GraftProc(object):
     def __init__(self):
-        self.__gpnoded = ProcPropsGraftnoded()
-        self.__gpwallet_cli = ProcPropsWalletCLI()
+        self.__gp_noded = ProcPropsGraftnoded()
+        self.__gp_wallet_cli = ProcPropsWalletCLI()
+        self.__gp_wallet_rpc = ProcPropsWalletRPC()
         self.__gp_server = ProcPropsGraftServer()
 
     @property
     def noded(self):
-        return self.__gpnoded
+        return self.__gp_noded
 
     @property
     def wallet_cli(self):
-        return self.__gpwallet_cli
+        return self.__gp_wallet_cli
+
+    @property
+    def wallet_rpc(self):
+        return self.__gp_wallet_rpc
 
     @property
     def server(self):
@@ -157,7 +179,7 @@ class GraftProc(object):
 
     @property
     def all(self):
-        return [self.wallet_cli, self.server, self.noded]
+        return [self.wallet_cli, self.wallet_rpc, self.server, self.noded]
 
 
 def cfg_file_add_switch(cfg, switch_name):
@@ -222,7 +244,7 @@ def mk_config_file(this_node = None, host_list = []):
     #cfg = cfg_file_add_test_net(cfg)
     #cfg = cfg_file_add_detach(cfg)
     cfg = cfg_file_add_net_id(cfg, '14686520-4172-7420-6f76-205761722035')
-    cfg = cfg_file_add_log_level(cfg, 1)
+    #cfg = cfg_file_add_log_level(cfg, 1)
     cfg = cfg_file_add_testnet_rpc_bind_port(cfg, 28681)
     cfg = cfg_file_add_testnet_rpc_bind_ip(cfg, ip_any_local)
     cfg = cfg_file_add_seed_nodes(cfg, host_list)
@@ -272,6 +294,20 @@ def mk_shell_cmd_to_start_graftnoded(host, host_list = []):
 def mk_shell_cmd_to_start_graft_server(host):
     full_file_name = '/home/{}/projects/graft/bin/graft_server'.format(host.user)
     cmd_to_run_in_bkgnd = 'nohup ' + full_file_name + ' &'
+    return cmd_to_run_in_bkgnd
+
+def mk_shell_cmd_to_start_wallet_rpc(wrpc_name, host):
+    full_file_name = '/home/{}/projects/graft/bin/{}'.format(host.user, wrpc_name)
+
+    params = ' --testnet --disable-rpc-login --confirm-external-bind'
+    params += ' --daemon-address http://localhost:{}'.format(host.port_nrpc)
+    params += ' --rpc-bind-port {}'.format(port_wrpc)
+    params += ' --rpc-bind-ip {}'.format(ip_any_local)
+
+    wallet_ffn = '/home/{}/.graft/supernode/data/stake-wallet/stake-wallet'.format(host.user)
+    params += ' --wallet-file {} --password ""'.format(wallet_ffn)
+
+    cmd_to_run_in_bkgnd = 'nohup ' + full_file_name + params + ' > /dev/null 2>&1 &'
     return cmd_to_run_in_bkgnd
 
 #def there_is_running_graft(graft_grep_result, graft_launch_cmd):
