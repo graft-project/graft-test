@@ -31,12 +31,13 @@ def test_dbg(report_ctl, host_starter):
     tn = 'sale-sale-details-DBG'
     print('\n  ##  {} test is beginning ...'.format(tn))
 
-    p = 10
-    p2 = 5
-    p3 = 10
-    ss.core.wait(p)
+    #p = 10
+    #p2 = 5
+    #p3 = 10
+
+    ss.core.wait(ss.cfg.wait['before_start_mining'])
     ss.host_ctl.mining_start(ss.graft_proc.noded)
-    ss.core.wait(p)
+    ss.core.wait(ss.cfg.wait['after_start_mining'])
 
     amount = 500 * 1000
     check_list = set()
@@ -76,6 +77,5 @@ def test_dbg(report_ctl, host_starter):
         assert (cond_sale(h.name) in check_list)
         for hh in ss.cfg.nodes:
             assert (cond_sale_det(h.name, hh.name) in check_list)
-
 
 

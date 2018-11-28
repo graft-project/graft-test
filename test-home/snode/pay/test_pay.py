@@ -27,28 +27,41 @@ def cond_sale_det(host_name, host_name2):
     return host_name + '-' + req + '-' + host_name2
 
 #@pytest.mark.skip(reason = 'skip')
+def get_neighbour_node(node_idx):
+    cnt = len(ss.cfg.nodes)
+    idx = (node_idx + 1) % cnt
+    #print('{} - {}'.format(node_idx, idx))
+    return ss.cfg.nodes[idx]
+
+@pytest.mark.skip(reason = 'skip')
+def test_dbg_1(load_cfg):
+    node_cnt = len(ss.cfg.nodes)
+    for i in range(node_cnt):
+        h = ss.cfg.nodes[i]
+        hn = get_neighbour_node(i)
+        print('this node: [{}], node-neighbout [{}]'.format(h, hn))
+
+#@pytest.mark.skip(reason = 'skip')
 def test_dbg(report_ctl, host_starter):
     tn = 'pay-DBG'
     print('\n  ##  {} test is beginning ...'.format(tn))
 
-    p = 4
-    p2 = 5
-    p3 = 10
-    ss.core.wait(12)
+    ss.core.wait(ss.cfg.wait['before_start_mining'])
     ss.host_ctl.mining_start(ss.graft_proc.noded)
-    ss.core.wait(12)
-
+    ss.core.wait(ss.cfg.wait['after_start_mining'])
 
     total_amount = 300 * 1000 * 1000 * 1000
-    for i in range(4):
+
+    check_list = set()
+    node_cnt = len(ss.cfg.nodes)
+    for i in range(node_cnt):
         h = ss.cfg.nodes[i]
+        hn = get_neighbour_node(i)
         print('\n\n  ================ sale for {}'.format(h.name))
-        sale_resp = ss.core.send_sale_request(h, total_amount, 1)
+        sale_resp = ss.core.send_sale_request(h, total_amount, ss.cfg.wait['before_sale_request'])
         pay_id, block_num = ss.core.sale_resp_get_result(sale_resp)
 
-        ss.core.wait(3)
-        hn = ss.cfg.nodes[i + 1]
-        sd_resp = ss.core.send_sale_details_request(hn, pay_id, block_num)
+        sd_resp = ss.core.send_sale_details_request(hn, pay_id, block_num, ss.cfg.wait['before_sale_details_request'])
         if ss.core.sale_datails_resp_is_ok(sd_resp):
 
             for r in sd_resp['result']['AuthSample']:
@@ -62,27 +75,40 @@ def test_dbg(report_ctl, host_starter):
 
             print('\nTotal auth-fee:{}'.format(total_fee))
 
-            pay_dst_list.append({'amount':total_amount - total_fee, 'address':ss.cfg.nodes[0].wallet})
+            pay_dst_list.append({'amount':total_amount - total_fee, 'address':h.wallet})
 
             for r in pay_dst_list:
                 print('{}'.format(r))
 
-            ss.core.wait(3)
+            tra_resp = ss.core.send_transfer_rta_request(h, pay_dst_list, ss.cfg.wait['before_transfer_rta_request'])
+            #print('transfer-rta-resp:{}'.format(tra_resp))
 
-            tra_resp = ss.core.send_transfer_rta_request(h, pay_dst_list)
-            print('transfer-rta-resp:{}'.format(tra_resp))
+            pay_resp = ss.core.send_pay_request(h, ss.cfg.nodes[0].wallet, pay_id, block_num, total_amount - total_fee, tra_resp['result']['tx_blob'], ss.cfg.wait['before_pay_request'])
+            #print('pay-resp: [{}]'.format(pay_resp))
+            if ss.core.pay_resp_is_ok(pay_resp):
+                print(' **  Pay is OK')
 
-            ss.core.wait(5)
+                pay_status_resp = ss.core.send_pay_status_request(h, pay_id, block_num, ss.cfg.wait['before_pay_status_request'])
+                if ss.core.pay_status_is_ok(pay_status_resp):
+                    print(' **  PayStatus is OK')
+                else:
+                    print('pay_status: [{}]'.format(pay_status_resp))
 
-            pay_resp = ss.core.send_pay_request(h, ss.cfg.nodes[0].wallet, pay_id, block_num, total_amount - total_fee, tra_resp['result']['tx_blob'])
-            print('pay-resp: [{}]'.format(pay_resp))
+                sale_status_resp = ss.core.send_sale_status_request(h, pay_id, block_num, ss.cfg.wait['before_sale_status_request'])
+                if ss.core.sale_status_is_ok(sale_status_resp):
+                    print(' **  SaleStatus is OK')
+                else:
+                    print('sale_status: [{}]'.format(sale_status_resp))
 
-            #def send_pay_request(src, merchant_addr, pay_id, block_num, amount, tx, wait_before_send = 0):
+                if ss.core.pay_status_is_ok(pay_status_resp) and ss.core.sale_status_is_ok(sale_status_resp):
+                    check_list.add(h.name)
 
-        break
+                #def send_pay_request(src, merchant_addr, pay_id, block_num, amount, tx, wait_before_send = 0):
 
+    for h in ss.cfg.nodes:
+        assert (h.name in check_list)
 
-
+def do_not_use_it():
         if ss.core.sale_resp_is_ok(sale_resp):
             check_list.add(cond_sale(h.name))
             print('  ##  sale-resp for {} is OK'.format(h.name))
@@ -108,7 +134,6 @@ def test_dbg(report_ctl, host_starter):
         elif ss.core.sale_resp_is_err(sale_resp):
             ec, em = ss.core.sale_resp_get_err(sale_resp)
             print('sale-resp ERR: {} {}'.format(ec, em))
-
 
 
 @pytest.mark.skip(reason = 'skip')

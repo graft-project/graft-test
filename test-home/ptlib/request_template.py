@@ -1,6 +1,28 @@
 #!/usr/bin/env python3
 
+from enum import IntEnum
+
 class RequestTemplate():
+
+    class SaleStatus(IntEnum):
+        waiting             = 1
+        in_progress         = 2
+        success             = 3
+        fail                = 4
+        rejected_by_wallet  = 5
+        rejected_by_pos     = 6
+
+        #"Status" : 1 (Waiting) | 2 (InProgress) | 3 (Success) | 4 (Fail) | 5 (RejectedByWallet) | 6 (RejectedByPOS)
+
+    class PayStatus(IntEnum):
+        waiting             = 1
+        in_progress         = 2
+        success             = 3
+        fail                = 4
+        rejected_by_wallet  = 5
+        rejected_by_pos     = 6
+
+
     announce = {
                   "jsonrpc":"2.0",
                   "method":"send_supernode_announce",
@@ -110,8 +132,8 @@ class RequestTemplate():
         "id":"0",
         "method":"pay_status",
         "params": {
-            "PaymentID": [optional] "<guid>",
-            "BlockNumber": <block number>
+            "PaymentID":  "<guid>[optional]",
+            "BlockNumber": "<block number>"
         }
     }
 

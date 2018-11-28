@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
@@ -154,6 +153,10 @@ cmd_kill_graft = 'pkill graft'
 
 run_ctx = {'faked-timestamp': 0}
 
+def log_url_json(url, jo):
+    log.info('RPC url: {}'.format(url))
+    log.info('JSON to send: {}'.format(json.dumps(jo)))
+
 def mk_full_file_name_from_local_name(file_name):
     path = os.path.dirname(os.path.realpath(__file__))
     return os.path.join(path, file_name)
@@ -254,14 +257,12 @@ def mk_sale_request(src, amount):
     jo = json.loads(json.dumps(RequestTemplate.sale))
     jo['params']['Address'] = src.wallet
     jo['params']['Amount'] = amount
-
     return mk_snode_rpc_dapi2_url(src, 'sale'), jo, default_rpc_req_headers()
 
 def mk_sale_details_request(src, pay_id, block_num):
     jo = json.loads(json.dumps(RequestTemplate.sale_details))
     jo['params']['PaymentID'] = pay_id
     jo['params']['BlockNumber'] = block_num
-
     return mk_snode_rpc_dapi2_url(src, 'sale_details'), jo, default_rpc_req_headers()
 
 def mk_pay_request(src, merchant_addr, pay_id, block_num, amount, tx):
@@ -271,8 +272,19 @@ def mk_pay_request(src, merchant_addr, pay_id, block_num, amount, tx):
     jo['params']['BlockNumber'] = block_num
     jo['params']['Amount'] = amount
     jo['params']['Transactions'] = [tx]
-
     return mk_snode_rpc_dapi2_url(src, 'pay'), jo, default_rpc_req_headers()
+
+def mk_pay_status_request(node, pay_id, block_num):
+    jo = json.loads(json.dumps(RequestTemplate.pay_status))
+    jo['params']['PaymentID'] = pay_id
+    jo['params']['BlockNumber'] = block_num
+    return mk_snode_rpc_dapi2_url(node, 'pay_status'), jo, default_rpc_req_headers()
+
+def mk_sale_status_request(node, pay_id, block_num):
+    jo = json.loads(json.dumps(RequestTemplate.sale_status))
+    jo['params']['PaymentID'] = pay_id
+    jo['params']['BlockNumber'] = block_num
+    return mk_snode_rpc_dapi2_url(node, 'sale_status'), jo, default_rpc_req_headers()
 
 def mk_unicast_request(src, dst):
     jo = json.loads(json.dumps(RequestTemplate.unicast))
@@ -411,8 +423,7 @@ def send_unicast_request(src, dst, wait_before_send = 0):
     if wait_before_send:
         time.sleep(wait_before_send)
     url, jo, hdrs = mk_unicast_request(src, dst)
-    log.info('Node RPC url: {}'.format(url))
-    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
     print(' # resp: {}'.format(r.json()))
 
@@ -420,8 +431,7 @@ def send_broadcast_request(src, wait_before_send = 0):
     if wait_before_send:
         time.sleep(wait_before_send)
     url, jo, hdrs = mk_broadcast_request(src)
-    log.info('Node RPC url: {}'.format(url))
-    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
     print(' # resp: {}'.format(r.json()))
 
@@ -429,8 +439,7 @@ def send_multicast_request(src, dst_list, wait_before_send = 0):
     if wait_before_send:
         time.sleep(wait_before_send)
     url, jo, hdrs = mk_multicast_request(src, dst_list)
-    log.info('Node RPC url: {}'.format(url))
-    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
     print(' # resp: {}'.format(r.json()))
 
@@ -438,8 +447,7 @@ def send_sale_request(src, amount, wait_before_send = 0):
     if wait_before_send:
         time.sleep(wait_before_send)
     url, jo, hdrs = mk_sale_request(src, amount)
-    log.info('SNode RPC url: {}'.format(url))
-    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
     print(' # resp: {}'.format(r.json()))
     return r.json()
@@ -448,10 +456,25 @@ def send_sale_details_request(src, pay_id, block_num, wait_before_send = 0):
     if wait_before_send:
         time.sleep(wait_before_send)
     url, jo, hdrs = mk_sale_details_request(src, pay_id, block_num)
-    log.info('SNode RPC url: {}'.format(url))
-    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
     #print(' # resp: {}'.format(r.json()))
+    return r.json()
+
+def send_sale_status_request(node, pay_id, block_num, wait_before_send = 0):
+    if wait_before_send:
+        time.sleep(wait_before_send)
+    url, jo, hdrs = mk_sale_status_request(node, pay_id, block_num)
+    log_url_json(url, jo)
+    r = requests.post(url, json = jo, headers = hdrs)
+    return r.json()
+
+def send_pay_status_request(node, pay_id, block_num, wait_before_send = 0):
+    if wait_before_send:
+        time.sleep(wait_before_send)
+    url, jo, hdrs = mk_pay_status_request(node, pay_id, block_num)
+    log_url_json(url, jo)
+    r = requests.post(url, json = jo, headers = hdrs)
     return r.json()
 
 def parse_sale_response(sale_resp):
@@ -491,24 +514,34 @@ def sale_details_resp_get_err(sd_resp):
     msg = o['message']
     return code, msg
 
+def pay_resp_is_ok(pay_resp):
+    hit = ('result' in pay_resp) and ('Result' in pay_resp['result']) and (pay_resp['result']['Result'] == 0)
+    return hit
+
+def sale_status_is_ok(sale_status_resp):
+    hit = ('result' in sale_status_resp) and ('Status' in sale_status_resp['result']) and (sale_status_resp['result']['Status'] == int(RequestTemplate.SaleStatus.success))
+    return hit
+
+def pay_status_is_ok(pay_status_resp):
+    #print('pay-status-is-ok: val: {}, const: {}'.format(pay_status_resp['result']['Status'], int(RequestTemplate.PayStatus.success)))
+    hit = pay_status_resp['result']['Status'] == int(RequestTemplate.PayStatus.success)
+    #hit = ('result' in pay_status_resp) and ('Status' in pay_status_resp['result']) and (pay_status_resp['result']['Status'] == RequestTemplate.PayStatus.success)
+    return hit
+
 def send_transfer_rta_request(src, dst_list, wait_before_send = 0):
     if wait_before_send:
         time.sleep(wait_before_send)
     url, jo, hdrs = mk_transfer_rta_request(src, dst_list)
-    log.info('SNode RPC url: {}'.format(url))
-    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
-    #print(' # resp: {}'.format(r.json()))
     return r.json()
 
 def send_pay_request(src, merchant_addr, pay_id, block_num, amount, tx, wait_before_send = 0):
     if wait_before_send:
         time.sleep(wait_before_send)
     url, jo, hdrs = mk_pay_request(src, merchant_addr, pay_id, block_num, amount, tx)
-    log.info('SNode RPC url: {}'.format(url))
-    log.info('JSON to send: {}'.format(json.dumps(jo)))
+    #log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
-    #print(' # resp: {}'.format(r.json()))
     return r.json()
 
 def there_is_running_graft(graft_grep_result, graft_launch_cmd):

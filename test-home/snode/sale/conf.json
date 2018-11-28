@@ -33,7 +33,9 @@
   "wait":
   {
     "between_announces": 10,
-    "between_test_request": 1
+    "between_test_request": 1,
+    "before_start_mining": 10,
+    "after_start_mining": 10
   }
 }
 
