@@ -28,6 +28,20 @@
       "ip": "34.204.90.5",
       "port_nrpc": "28681",
       "wallet": "FDLseu2r6H3Aajg6TfMnSQAx1o5oniBTrgXMurKuUuRM8mjZUhe2wD6YefPDi4qV61M9romH44oQZcjVzCrLqAtBLz1eDkK"
+    },
+    {
+      "name": "gn05",
+      "user": "ubuntu",
+      "ip": "52.201.100.207",
+      "port_nrpc": "28681",
+      "wallet": "F4foKaMzcJ74msSxGH4VJSWywdYLhLwic1nCw6ohhRsdbYFQ7LzG65mKJpMzKkZ79pfuvC3yUvF1aXZYvbTzG2tsAPEdyzW"
+    },
+    {
+      "name": "gn06",
+      "user": "ubuntu",
+      "ip": "35.153.202.111",
+      "port_nrpc": "28681",
+      "wallet": "F7RLcYfwN5dEZjaRzGY45mAkVvmQqXvNCXocssunmRSPWjSJETQtNdFjGkdnyJMfQRTU1Mg5Z435Ad5FoWJArvoB62mwpFj"
     }
   ],
   "pit":
