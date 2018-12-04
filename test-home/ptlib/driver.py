@@ -23,7 +23,8 @@ class Host(NamedTuple):
     port_nrpc: int
 
 def wait(wait_sec):
-    time.sleep(wait_sec)
+    if wait_sec:
+        time.sleep(wait_sec)
 
 def load_config(path, conf_file, conf_obj):
     conf = os.path.join(path, conf_file)
@@ -395,8 +396,7 @@ def send_get_peer_list(ip_addr, port):
     url_nrpc = 'http://' + ip_addr + ':' + str(port) + '/get_peer_list'
     log.info('Node RPC url: {}'.format(url_nrpc))
 
-    hdrs = {'Content-Type':'application/json'}
-    r = requests.get(url_nrpc, headers = hdrs)
+    r = requests.get(url_nrpc, headers = default_rpc_req_headers())
     rs = json.dumps(r.json(), indent = 2)
     print(' # resp: {}'.format(rs))
     dump_to_file('get-peer-list', ip_addr, rs)
@@ -420,32 +420,28 @@ def send_announce_to_node(host, wait_before_send = 0):
     send_announce(host, ip_n0)
 
 def send_unicast_request(src, dst, wait_before_send = 0):
-    if wait_before_send:
-        time.sleep(wait_before_send)
+    wait(wait_before_send)
     url, jo, hdrs = mk_unicast_request(src, dst)
     log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
     print(' # resp: {}'.format(r.json()))
 
 def send_broadcast_request(src, wait_before_send = 0):
-    if wait_before_send:
-        time.sleep(wait_before_send)
+    wait(wait_before_send)
     url, jo, hdrs = mk_broadcast_request(src)
     log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
     print(' # resp: {}'.format(r.json()))
 
 def send_multicast_request(src, dst_list, wait_before_send = 0):
-    if wait_before_send:
-        time.sleep(wait_before_send)
+    wait(wait_before_send)
     url, jo, hdrs = mk_multicast_request(src, dst_list)
     log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
     print(' # resp: {}'.format(r.json()))
 
 def send_sale_request(src, amount, wait_before_send = 0):
-    if wait_before_send:
-        time.sleep(wait_before_send)
+    wait(wait_before_send)
     url, jo, hdrs = mk_sale_request(src, amount)
     log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
@@ -453,8 +449,7 @@ def send_sale_request(src, amount, wait_before_send = 0):
     return r.json()
 
 def send_sale_details_request(src, pay_id, block_num, wait_before_send = 0):
-    if wait_before_send:
-        time.sleep(wait_before_send)
+    wait(wait_before_send)
     url, jo, hdrs = mk_sale_details_request(src, pay_id, block_num)
     log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
@@ -462,16 +457,14 @@ def send_sale_details_request(src, pay_id, block_num, wait_before_send = 0):
     return r.json()
 
 def send_sale_status_request(node, pay_id, block_num, wait_before_send = 0):
-    if wait_before_send:
-        time.sleep(wait_before_send)
+    wait(wait_before_send)
     url, jo, hdrs = mk_sale_status_request(node, pay_id, block_num)
     log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
     return r.json()
 
 def send_pay_status_request(node, pay_id, block_num, wait_before_send = 0):
-    if wait_before_send:
-        time.sleep(wait_before_send)
+    wait(wait_before_send)
     url, jo, hdrs = mk_pay_status_request(node, pay_id, block_num)
     log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
@@ -529,16 +522,14 @@ def pay_status_is_ok(pay_status_resp):
     return hit
 
 def send_transfer_rta_request(src, dst_list, wait_before_send = 0):
-    if wait_before_send:
-        time.sleep(wait_before_send)
+    wait(wait_before_send)
     url, jo, hdrs = mk_transfer_rta_request(src, dst_list)
     log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
     return r.json()
 
 def send_pay_request(src, merchant_addr, pay_id, block_num, amount, tx, wait_before_send = 0):
-    if wait_before_send:
-        time.sleep(wait_before_send)
+    wait(wait_before_send)
     url, jo, hdrs = mk_pay_request(src, merchant_addr, pay_id, block_num, amount, tx)
     #log_url_json(url, jo)
     r = requests.post(url, json = jo, headers = hdrs)
@@ -567,7 +558,7 @@ def mk_host_down(host):
     while host_is_up(host):
         exec_ssh_cmd(cmd, host)
         if host_is_up(host):
-            time.sleep(2)
+            wait(2)
 
 def exec_send_announce_to_node_1():
     send_announce(host1, ip_n1)
@@ -596,8 +587,7 @@ def exec_send_announce_to_node_123():
     exec_send_announce_to_node_3()
 
 def send_announce_to_node(host, wait_before_send = 0):
-    if wait_before_send:
-        time.sleep(wait_before_send)
+    wait(wait_before_send)
     send_announce(host, ip_n0)
 
 def exec_send_announce_to_node_01():

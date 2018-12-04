@@ -25,9 +25,11 @@ def test_get_tunnels(report_ctl, start_cryptonode):
 
     #ns.wait_till_complete(1)
 
-    ss.host_requester.get_tunnels('self-test of get-tunnels')
+    ss.host_requester.get_tunnels('self-test of get-tunnels', 2)
+    ss.host_requester.get_peer_list('self-test of peer-list', 2)
+    ss.host_requester.get_connections('self-test of get-connections', 2)
 
-
+#@pytest.mark.skip(reason = 'skip')
 def test_get_supernode_list(report_ctl, start_cryptonode_and_supernode):
     tn = 'self-test -- host_requester.supernode-list'
     print('\n  ##  {} test is beginning ...'.format(tn))
@@ -45,5 +47,9 @@ def test_get_supernode_list(report_ctl, start_cryptonode_and_supernode):
 
     #ns.wait_till_complete(1)
 
-    ss.host_requester.get_supernode_all_list('self-test of get-supernode-all-list')
+    print('waiting 5 secs ...')
+    ss.host_requester.get_supernode_all_list('self-test of get-supernode-all-list', 5)
+
+    print('waiting 5 secs ...')
+    ss.host_requester.get_supernode_good_list('self-test of get-supernode-good-list', 5)
 
