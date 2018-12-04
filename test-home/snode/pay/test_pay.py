@@ -33,15 +33,18 @@ def get_neighbour_node(node_idx):
     #print('{} - {}'.format(node_idx, idx))
     return ss.cfg.nodes[idx]
 
-@pytest.mark.skip(reason = 'skip')
-def test_dbg_1(load_cfg):
+#def test_dbg_1(load_cfg):
+#@pytest.mark.skip(reason = 'skip')
+def test_dbg_1(report_ctl, host_starter):
     node_cnt = len(ss.cfg.nodes)
     for i in range(node_cnt):
         h = ss.cfg.nodes[i]
         hn = get_neighbour_node(i)
         print('this node: [{}], node-neighbout [{}]'.format(h, hn))
 
-#@pytest.mark.skip(reason = 'skip')
+    ss.host_requester.get_tunnels()
+
+@pytest.mark.skip(reason = 'skip')
 def test_dbg(report_ctl, host_starter):
     tn = 'pay-DBG'
     print('\n  ##  {} test is beginning ...'.format(tn))
@@ -187,7 +190,6 @@ def test_sail_details_dbg(report_ctl, host_starter):
             assert (cond_sale_det(h.name, hh.name) in check_list)
 
 
-#ss.host_requester.get_tunnels()
 @pytest.mark.skip(reason = 'skip')
 def test(report_ctl, host_starter):
     tn = 'sale-sale-details'

@@ -38,19 +38,45 @@ class HostRequester(object):
             threads.append(th)
         return threads, resps
 
-    def dump_to_file(self, func_name, text_to_dump):
+    def write_hint(self, outfile, hint):
+        if hint:
+            hint = '\nhint: ' + hint + '\n'
+            outfile.write(hint)
+
+    def dump_to_file(self, func_name, text_to_dump, hint):
         fn = os.path.join(self.__dst_path(), self.mk_file_name(func_name))
         with open(fn, 'w') as outfile:
+            self.write_hint(outfile, hint)
             outfile.write(text_to_dump)
 
     def name(self):
         return 'HostRequester'
 
-    def get_connections(self):
+    def get_connections(self, hint = ''):
         pass
 
-    def get_peer_list(self):
+    def get_peer_list(self, hint = ''):
         pass
+
+    def get_supernode_good_list(self, hint = ''):
+        pass
+
+
+    def thread_get_supernode_all(self, host, resp):
+        #http://gn01:28690/debug/supernode_list/0
+        port = self.__core.port_srpc
+        url = 'http://' + host.ip + ':' + str(port) + '/debug/supernode_list/1'
+        log.info('Snode RPC url: {}'.format(url))
+
+        r = requests.post(url, headers = self.__core.default_rpc_req_headers())
+        resp['resp'] = json.loads(r.text)
+
+    def get_supernode_all_list(self, hint = ''):
+        threads, resps = self.do_requests_in_parallel(self.thread_get_supernode_all)
+        for t in threads:
+            t.join()
+        self.dump_to_file('get-supernode-list-all', json.dumps(resps, indent = 2), hint)
+
 
     def thread_get_tunnels(self, host, resp):
         url_nrpc = self.__core.mk_node_rpc_rta_url_by_host(host)
@@ -59,15 +85,14 @@ class HostRequester(object):
         json_req = {"jsonrpc":"2.0","id":"0","method":"get_tunnels"}
         log.info('JSON to send: {}'.format(json.dumps(json_req)))
 
-        hdrs = {'Content-Type':'application/json'}
-        r = requests.post(url_nrpc, json = json_req, headers = hdrs)
+        r = requests.post(url_nrpc, json = json_req, headers = self.__core.default_rpc_req_headers())
         rs = r.text
         #print(' # resp: {}'.format(rs))
         resp['resp'] = json.loads(rs)
 
-    def get_tunnels(self):
+    def get_tunnels(self, hint = ''):
         threads, resps = self.do_requests_in_parallel(self.thread_get_tunnels)
         for t in threads:
             t.join()
-        self.dump_to_file('get-tunnels', json.dumps(resps, indent = 2))
+        self.dump_to_file('get-tunnels', json.dumps(resps, indent = 2), hint)
 

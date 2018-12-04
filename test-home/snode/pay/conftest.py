@@ -30,3 +30,21 @@ def host_starter(request):
     yield
     pass
 
+@pytest.fixture
+def start_cryptonode(request):
+    ss.host_ctl.stop_all(ss.graft_proc.all)
+    path = ss.core.mk_remote_path_to_log_dir(ss.cfg.nodes[0])
+    ss.graft_proc.noded.pass_args_for_cmd_start(path, ss.report_ctl.time_stamp, ss.cfg.nodes)
+    ss.host_ctl.start_all2([ss.graft_proc.noded])
+    yield
+    pass
+
+@pytest.fixture
+def start_cryptonode_and_supernode(request):
+    ss.host_ctl.stop_all(ss.graft_proc.all)
+    path = ss.core.mk_remote_path_to_log_dir(ss.cfg.nodes[0])
+    ss.graft_proc.noded.pass_args_for_cmd_start(path, ss.report_ctl.time_stamp, ss.cfg.nodes)
+    ss.host_ctl.start_all2([ss.graft_proc.noded, ss.graft_proc.server])
+    yield
+    pass
+

@@ -49,6 +49,27 @@ def test_dbg(report_ctl, host_starter):
     #        print('from {} about {}: {}'.format(src.name, dst.name, check_result([], src, dst)))
 
 
+#@pytest.mark.skip(reason = 'skip')
+def test_1(report_ctl, host_starter):
+    tn = 'test -- host_requester.get_tunnels'
+    print('\n  ##  {} test is beginning ...'.format(tn))
+
+    ns = SNodeStub('stub')
+
+    @ns.route('/dapi/v2.0/send_supernode_announce', methods=['POST'])
+    def on_req():
+        return ns.build_custom_default_response()
+
+    ns.run()
+
+    for host in ss.cfg.nodes:
+        ss.core.send_announce_to_node(host, ss.cfg.wait['between_announces'])
+
+    ns.wait_till_complete(1)
+
+    ss.host_requester.get_tunnels('self-test of get-tunnels')
+
+
 @pytest.mark.skip(reason = 'skip')
 def test(report_ctl, host_starter):
     tn = 'announce'
