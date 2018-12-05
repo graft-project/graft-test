@@ -35,7 +35,10 @@
     "between_announces": 10,
     "between_test_request": 1,
     "before_start_mining": 10,
-    "after_start_mining": 10
+    "after_start_mining": 10,
+    "before_first_sale_details_request": 5,
+    "before_next_sale_details_request": 10
   }
 }
+
 

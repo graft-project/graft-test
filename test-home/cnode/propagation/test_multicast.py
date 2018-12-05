@@ -20,7 +20,7 @@ def check_result(resp_list, peer_src, peer_dst):
         break
     return found
 
-@pytest.mark.skip(reason = 'skip')
+#@pytest.mark.skip(reason = 'skip')
 def test(report_ctl, host_starter):
     tn = 'multicast'
     print('\n  ##  {} test is beginning ...'.format(tn))
@@ -64,14 +64,5 @@ def test(report_ctl, host_starter):
             if src.ip == dst.ip:
                 continue
             assert check_result(ns.resp_list, src, dst)
-
-#p1 = 2
-#p2 = 2
-#
-#p1 = 15
-#p2 = 3
-#
-#p1 = 10
-#p2 = 3
 
 

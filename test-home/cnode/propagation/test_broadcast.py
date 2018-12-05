@@ -20,7 +20,7 @@ def check_result(resp_list, peer_src, peer_dst):
         break
     return found
 
-@pytest.mark.skip(reason = 'skip')
+#@pytest.mark.skip(reason = 'skip')
 def test(report_ctl, host_starter):
     tn = 'broadcast'
     print('\n  ##  {} test is beginning ...'.format(tn))

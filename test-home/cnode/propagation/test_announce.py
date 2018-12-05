@@ -49,7 +49,7 @@ def test_dbg(report_ctl, host_starter):
     #        print('from {} about {}: {}'.format(src.name, dst.name, check_result([], src, dst)))
 
 
-#@pytest.mark.skip(reason = 'skip')
+@pytest.mark.skip(reason = 'skip')
 def test_1(report_ctl, host_starter):
     tn = 'test -- host_requester.get_tunnels'
     print('\n  ##  {} test is beginning ...'.format(tn))
@@ -70,7 +70,7 @@ def test_1(report_ctl, host_starter):
     ss.host_requester.get_tunnels('self-test of get-tunnels')
 
 
-@pytest.mark.skip(reason = 'skip')
+#@pytest.mark.skip(reason = 'skip')
 def test(report_ctl, host_starter):
     tn = 'announce'
     print('\n  ##  {} test is beginning ...'.format(tn))

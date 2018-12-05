@@ -2,21 +2,8 @@
 
 import pytest
 from ptlibx import driver as drv
-from ptlib.snode_stub import SNodeStub as SNodeStub
-from flask import json, request
 
 ss = drv.session
-
-def check_result(resp_list, peer_sender, peer_subj):
-    found = False
-    for r in resp_list:
-        if r['flask_remote_addr'] != peer_sender.ip:
-            continue
-        if r['params']['address'] != peer_subj.wallet:
-            continue
-        found = True
-        break
-    return found
 
 def cond_sale(host_name):
     req = 'sale'
@@ -26,14 +13,10 @@ def cond_sale_det(host_name, host_name2):
     req = 'sail-details'
     return host_name + '-' + req + '-' + host_name2
 
-@pytest.mark.skip(reason = 'skip')
-def test_dbg(report_ctl, host_starter):
-    tn = 'sale-sale-details-DBG'
+#@pytest.mark.skip(reason = 'skip')
+def test(report_ctl, host_starter):
+    tn = 'sale-sale-details'
     print('\n  ##  {} test is beginning ...'.format(tn))
-
-    #p = 10
-    #p2 = 5
-    #p3 = 10
 
     ss.core.wait(ss.cfg.wait['before_start_mining'])
     ss.host_ctl.mining_start(ss.graft_proc.noded)
@@ -53,9 +36,9 @@ def test_dbg(report_ctl, host_starter):
                 for try_cnt in range(0, 4):
 
                     if try_cnt == 0:
-                        ss.core.wait(p2)
+                        ss.core.wait(ss.cfg.wait['before_first_sale_details_request'])
                     else:
-                        ss.core.wait(p3)
+                        ss.core.wait(ss.cfg.wait['before_next_sale_details_request'])
 
                     sd_resp = ss.core.send_sale_details_request(hh, pay_id, block_num)
                     if ss.core.sale_datails_resp_is_ok(sd_resp):
@@ -77,5 +60,4 @@ def test_dbg(report_ctl, host_starter):
         assert (cond_sale(h.name) in check_list)
         for hh in ss.cfg.nodes:
             assert (cond_sale_det(h.name, hh.name) in check_list)
-
 
