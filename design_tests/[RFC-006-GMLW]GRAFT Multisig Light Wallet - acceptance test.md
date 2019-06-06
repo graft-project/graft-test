@@ -49,7 +49,7 @@ Step | Description|  Test Result|
 2.5| Check balance | WB balance should be equal 100|
 2.6| Open LCW and check balance|LCW  balance must be equal 100|
 3|**Check transfer regular Tx and Tx time**|
-3.1|**Check transfer regular Tx with 1 output and Tx time**|
+3.1|_**Check transfer regular Tx with 1 output and Tx time**_|
 3.1.1| Go to LCW and make regular Tx from LCW  to WTI1|Transfer <WTI1 address> 10|
 3.1.2| Send Tx| System should require sign|
 3.1.3| Check time request from system| Request must received in N = 2 sec|
@@ -58,7 +58,7 @@ Step | Description|  Test Result|
 3.1.6| Check balance| Balance must be equal GRFT100, amount = 10+Fee for mining should be locked|
 3.1.7| Wait 15-20 min| |
 3.1.8| Check balance| Balance must be equal GRFT90-Fee for mining, locked amount  should be equal 0|
-3.2|** Check transfer regular Tx with 2 outputs and Tx time**|
+3.2|_**Check transfer regular Tx with 2 outputs and Tx time**_|
 3.2.1| Go to LCW and make regular Tx from LCW  to WTI1| Transfer <WTI1 address> 10 <WTI2 address> 20|
 3.2.2| Send Tx| System should require sign|
 3.2.3| Check time request from system| Request must received in N = 2 sec|
@@ -68,7 +68,7 @@ Step | Description|  Test Result|
 3.2.7| Wait 15-20 min||
 3.2.8| Check balance| Balance must be equal GRFT70 - Fee for mining, locked amount  should be equal 0|
 4| **Check Sync between WB and LCW**|
-4.1| **Check Sync on the Tx level**|
+4.1| _**Check Sync on the Tx level**_|
 4.1.1| Close WB| |
 4.1.2| Go to LCW  check balance| Balance Amount1= balance amount (save it)|
 4.1.3| Make regular Tx| Transfer <WTI1 address> 10|
@@ -85,7 +85,7 @@ Step | Description|  Test Result|
 4.1.14| Wait 15-20 min| |
 4.1.15| Check balance| Balance must be equal Amount1-10 - Fee for mining, locked amount  should be equal 0|
 4.1.16| Go to WB and check balance| WB balance should be equal LCW balance|
-4.2| **Check Blockchain synchronization**|
+4.2| _**Check Blockchain synchronization**_|
 4.2.1| Open LCW and check Blockchain height| bc_heihgt|
 4.2.2| Open WB and check Blockchain height| bc_heihgt|
 4.2.3| Close WB| |
@@ -98,4 +98,3 @@ Step | Description|  Test Result|
 5.1| Go to WB and search payment_id for regular Tx to 1 output WTI1| 
 5.2| Go to Blockchain Explorer and search Tx by payment_ID| Blockchain Explorer should show Yx detail on the screen |
 5.3| Check Tx size| Tx sice should be <=3 Kb|
-
