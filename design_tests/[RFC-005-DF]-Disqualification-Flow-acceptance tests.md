@@ -1,84 +1,55 @@
-Disqualification Flow -tests
+# Disqualification Flow - acceptance tests
 
+## Environment:
 
+**_Hardware / Systems Requirement: Minimum hardware requirements include:_**
+ 
+ **OS:** Ubuntu **18.04** LTS Bionic
 
-Environment:
+Name|Build Requirments	|Run Requirements
+----|-------------------|----------------
+RAM, GB |	8	|2
+CPU, Cores	|2	|2
+Storage, GB	|100	|100
 
-OS: Ubuntu 18.04 LTS Bionic
-
-
-
-Build Requirements
-Run Requirements
-RAM, GB
-8
-2
-CPU, Cores
-2
-2
-Storage, GB
-100
-100
-
-Note: In order to GraftNode (also called the cryptonode) work properly 28680 (P2P) port should be opened for incoming and outgoing traffic. If you are using other ports, please, make sure that you are open P2P port of the cryptonode.
+_Note:_ In order to GraftNode (also called the cryptonode) work properly 28680 (P2P) port should be opened for incoming and outgoing traffic. If you are using other ports, please, make sure that you are open P2P port of the cryptonode.
 
 2. RTA network
-3. 8 installed and synchronized  SN:
-
-For test you should have:
-8 AWS EC2 instances with Ununtu 18.04 running graftnoded and supernode , 
-4.  8 stake wallets  for Supernode stakes. Each Wallet should have more than GRFT 50 000 amount. Each Wallet should send Stake Tx for amount >=GRFT 50000 
+3. 8 AWS EC2 instances with Ununtu 18.04 running graftnoded and supernode
+4. 8 stake wallets  for Supernode stakes. Each Wallet should have more than GRFT 50 000 amount. Each Wallet should send Stake Tx for amount >=GRFT 50000 
 5. Before tests you should run:
-5.1     curl --request GET http://<SN1 IP address>:28690/dapi/v2.0/cryptonode/getwalletaddress
-and save SN`s info :
-Wallet_public_address1
-Id_key1
-Signature1
-5.2     curl --request GET http://<SN2 IP address>:28690/dapi/v2.0/cryptonode/getwalletaddress
-and save SN`s info :
-Wallet_public_address2
-Id_key2
-signature2
 
+   5.1     `curl --request GET http://<SN1 IP address>:28690/dapi/v2.0/cryptonode/getwalletaddress`
+and save SN info :
+- Wallet_public_address1
+- Id_key1
+- Signature1
+
+5.2     `curl --request GET http://<SN2 IP address>:28690/dapi/v2.0/cryptonode/getwalletaddress`
+and save SN info :
+- Wallet_public_address2
+- Id_key2
+- Signature2
 
 6. You should know current BC height
 
 
-TESTS:
+## TESTS:
 
-##
-Description
-User Story
-Test #1
-Disqualification of a SN by Type1 criteria (unresponsiveness of a random SN)
-As a SN owner,I want to make sure that my SN is in the disqualification list (disqualification Type 1) and does not take part in the signing of an RTA Tx (is not  in the BBL and AuthSample lists but presents in the active SN list)
-Test #2
-Unblocking SN disqualified by Type 1 criteria
-As a SN owner, I want to ensure my SN is not blocked from signing RTA Tx and added to BBList after unblocking 
-Test #3
-Existence of disqualification Tx of Type 1 for disqualified SN
-As an owner of the SN, I want to check availability of the DisqTx of Type 1 and ensure the number of signatures is equal to 8.
-Test #4
-Disqualification of a SN by Type2 criteria (lack of response from SN in Auth Sample)
-As an owner of 2 SNs, I want to make sure that my SNs are in the disqualification list (disqualification Type 2) and does not take part in the signing of RTA Tx (are not  in the BBL and AuthSample but present in the active SN list). 
-Test #5
-Unblocking SN disqualified by Type 2 criteria
-As  SNs owner, I want to be sure that my 2 SNs unblocked for participation in signing Tx and added to BBList after Type 2 disqualification
-Test #6
-Existence of disqualification Tx of Type 2  for disqualified SN
-As an owner of the SNs, I want to check the availability of the DisqTx of Type 2 and  ensure the number of  signatories is equal to 6, and all 6 SN signed disqTx also signed the RTA Tx .
-Test #7
-Disqualification policy
-Not used
-Test #8
-Unblocking  SN disqualified  by criteria of disqualification policy
-Not used
-Test #9
-Participation of an active SN to Qualification Sample
-Not used
+##|Description|User Story|
+----|-----------|----------|
+Test #1| Disqualification of a SN by Type1 criteria (unresponsiveness of a random SN)| As a SN owner,I want to make sure that my SN is in the disqualification list (disqualification Type 1) and does not take part in the signing of an RTA Tx (is not  in the BBL and AuthSample lists but presents in the active SN list)|
+Test #2| Unblocking SN disqualified by Type 1 criteria| As a SN owner, I want to ensure my SN is not blocked from signing RTA Tx and added to BBList after unblocking 
+Test #3| Existence of disqualification Tx of Type 1 for disqualified SN| As an owner of the SN, I want to check availability of the DisqTx of Type 1 and ensure the number of signatures is equal to 8.
+Test #4| Disqualification of a SN by Type2 criteria (lack of response from SN in Auth Sample)| As an owner of 2 SNs, I want to make sure that my SNs are in the disqualification list (disqualification Type 2) and does not take part in the signing of RTA Tx (are not  in the BBL and AuthSample but present in the active SN list). 
+Test #5| Unblocking SN disqualified by Type 2 criteria| As  SNs owner, I want to be sure that my 2 SNs unblocked for participation in signing Tx and added to BBList after Type 2 disqualification
+Test #6| Existence of disqualification Tx of Type 2  for disqualified SN| As an owner of the SNs, I want to check the availability of the DisqTx of Type 2 and  ensure the number of  signatories is equal to 6, and all 6 SN signed disqTx also signed the RTA Tx .
+Test #7|Disqualification policy|Not used
+Test #8|Unblocking  SN disqualified  by criteria of disqualification policy|Not used
+Test #9|Participation of an active SN to Qualification Sample|Not used
 
 
-Details:
+## Details:
 
 ##
 Steps
