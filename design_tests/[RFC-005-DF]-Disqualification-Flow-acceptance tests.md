@@ -12,32 +12,32 @@ RAM, GB |	8	|2
 CPU, Cores	|2	|2
 Storage, GB	|100	|100
 
-_Note:_ In order to GraftNode (also called the cryptonode) work properly 28680 (P2P) port should be opened for incoming and outgoing traffic. If you are using other ports, please, make sure that you are open P2P port of the cryptonode.
+>_Note:_ In order to GraftNode (also called the cryptonode) work properly 28680 (P2P) port should be opened for incoming and outgoing traffic. If you are using other ports, please, make sure that you are open P2P port of the cryptonode.
 
 2. RTA network
 3. 8 AWS EC2 instances with Ununtu 18.04 running graftnoded and supernode
 4. 8 stake wallets  for Supernode stakes. Each Wallet should have more than GRFT 50 000 amount. Each Wallet should send Stake Tx for amount >=GRFT 50000 
 5. Before tests you should run:
 
-   5.1     `curl --request GET http://<SN1 IP address>:28690/dapi/v2.0/cryptonode/getwalletaddress`
-and save SN info :
-- Wallet_public_address1
-- Id_key1
-- Signature1
+   5.1 `curl --request GET http://<SN1 IP address>:28690/dapi/v2.0/cryptonode/getwalletaddress` and save SN info :
+   
+       - Wallet_public_address1
+       - Id_key1
+       - Signature1
 
-5.2     `curl --request GET http://<SN2 IP address>:28690/dapi/v2.0/cryptonode/getwalletaddress`
-and save SN info :
-- Wallet_public_address2
-- Id_key2
-- Signature2
+   5.2 `curl --request GET http://<SN2 IP address>:28690/dapi/v2.0/cryptonode/getwalletaddress` and save SN info :
+   
+       - Wallet_public_address2
+       - Id_key2
+       - Signature2
 
 6. You should know current BC height
 
 
 ## TESTS:
 
-##|Description|User Story|
-----|-----------|----------|
+ ##|Description|User Story|
+------|-----------|----------|
 Test #1| Disqualification of a SN by Type1 criteria (unresponsiveness of a random SN)| As a SN owner,I want to make sure that my SN is in the disqualification list (disqualification Type 1) and does not take part in the signing of an RTA Tx (is not  in the BBL and AuthSample lists but presents in the active SN list)|
 Test #2| Unblocking SN disqualified by Type 1 criteria| As a SN owner, I want to ensure my SN is not blocked from signing RTA Tx and added to BBList after unblocking 
 Test #3| Existence of disqualification Tx of Type 1 for disqualified SN| As an owner of the SN, I want to check availability of the DisqTx of Type 1 and ensure the number of signatures is equal to 8.
@@ -51,71 +51,31 @@ Test #9|Participation of an active SN to Qualification Sample|Not used
 
 ## Details:
 
-##
-Steps
+### Test #1  Disqualification of a SN by Type1 criteria (unresponsiveness of a random SN): 
+> As a SN owner,I want to make sure that my SN is in the disqualification list (disqualification Type 1) and does not take part in the signing of an RTA Tx (is not  in the BBL and AuthSample lists but presents in the active SN list)
+
+##|Steps| Excepted Result|
+------|------|-----------------|
+
+1.1 |To check the presence of the SN in BBL list run: `curl --header "Content-Type: application/json" --data '' --request GET http://<SN1 IP address>:28690/debug/blockchain_based_list/<block height> 2>/dev/null | python -mjson.tool`
 
 
-Excepted Result
-Test #1
-Disqualification of a SN by Type1 criteria (unresponsiveness of a random SN): 
-As a SN owner,I want to make sure that my SN is in the disqualification list (disqualification Type 1) and does not take part in the signing of an RTA Tx (is not  in the BBL and AuthSample lists but presents in the active SN list)
-1.1
-To check the presence of the SN in BBL list run:
-curl --header "Content-Type: application/json" --data '' --request GET http://<SN1 IP address>:28690/debug/blockchain_based_list/<block height> 2>/dev/null | python -mjson.tool
-
-
-SN should be present in BBL:
-…
- {
+| SN should be present in BBL: ```ruby
+…  {
  "Address": "<Wallet_public_address1>",
  "PublicId": "<Id_key1>",
 "StakeAmount": <SN1 stake amount>
- },
-...
-1.2
-Shut down SN:
-kill <# of the SN1  process in ubuntu>
-
- and wait 3-5 blocks
-
-
-Run ps -ela
-You shouldn't find the SN process in the ubuntu process list.
-1.3
-To check the absence of the  SN in BBL List run:
-curl --header "Content-Type: application/json" --data '' --request GET http://<SN1 IP address>:28690/debug/blockchain_based_list/<block height> 2>/dev/null | python -mjson.too
-
-
-SN should be absent in BBL
-1.4
-Select Disq.List and check SN in Disq.List
-
-
-SN should be present in Disq.List
-1.4.1
-Save ID of your disq.Tx for Test#3
-
-
-
-
-1.4.2
-Save DisqExpiringBlock for Test#2
-
-
-
-
-1.5
-To check the absence of the  SN in AuthSample List run:
-curl --request GET http://<SN1 IP address>:28690/debug/auth_sample/aabbccddeeff 2>/dev/null | python -mjson.tool
-
-
-SN should be  absent in Auth Sample List
-1.6
-To check the presence of the  SN in SN List run:
-curl --header "Content-Type: application/json" --data '' --request GET http:/<SN1 IP address>:28690/debug/supernode_list/1 2>/dev/null | python -mjson.tool
-
-
-SN should be present in the SN List :
+ }, ... ```|
+1.2| Shut down SN:
+`kill <# of the SN1  process in ubuntu>`  and wait 3-5 blocks. Run `ps -ela` | You shouldn't find the SN process in the ubuntu process list|
+1.3| To check the absence of the  SN in BBL List run:
+`curl --header "Content-Type: application/json" --data '' --request GET http://<SN1 IP address>:28690/debug/blockchain_based_list/<block height> 2>/dev/null | python -mjson.too`|SN should be absent in BBL|
+1.4| Select Disq.List and check SN in Disq.List| SN should be present in Disq.List
+1.4.1|Save ID of your disq.Tx for Test#3 |
+1.4.2| Save DisqExpiringBlock for Test#2|
+1.5| To check the absence of the  SN in AuthSample List run: `curl --request GET http://<SN1 IP address>:28690/debug/auth_sample/aabbccddeeff 2>/dev/null | python -mjson.tool`| SN should be  absent in Auth Sample List|
+1.6|To check the presence of the  SN in SN List run: `curl --header "Content-Type: application/json" --data '' --request GET http:/<SN1 IP address>:28690/debug/supernode_list/1 2>/dev/null | python -mjson.tool`| SN should be present in the SN List :
+```ruby
 …
 {
                 ""Address"": ""<Wallet_public_address1>"",
@@ -130,6 +90,7 @@ SN should be present in the SN List :
                 ""StakeFirstValidBlock"": 340001
             },
 ...
+```
 Test #2
 Unblocking SN disqualified by Type 1 criteria: 
 As a SN owner, I want to ensure my SN is not blocked from signing RTA Tx and added to BBList after unblocking
