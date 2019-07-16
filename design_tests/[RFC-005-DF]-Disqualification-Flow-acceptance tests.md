@@ -65,35 +65,15 @@ Test#9|Participation of an active SN to Qualification Sample|Not used
                 ""LastUpdateAge"": 4,                 ""PublicId"":<Id_key1> ""42001a6ec3804d4305efb8538515395f4c6c521ff91c069e9e6fa2a404b33041"",                 ""StakeAmount"": <amount of SN1 stake Tx>,
                 ""StakeExpiringBlock"": 340123,                 ""StakeFirstValidBlock"": 340001             }, ... `|
                 
-Test #2
-Unblocking SN disqualified by Type 1 criteria: 
-As a SN owner, I want to ensure my SN is not blocked from signing RTA Tx and added to BBList after unblocking
-2.1
-After  Test#1
-
-
-
-
-2.2
-Run SN: 
-./graftnoded --testnet --log-file /home/ubuntu/graft/GraftLog/
-and wait for blockchain synchronization
-
-
-In case of successful synchronization, you  can see on the screen information:
-Synchronized OK
-2.3
-Wait Block height= DisqExpiringBlock + 5
-
-
-
-
-2.4
-To check the appearance  of the  SN in BBL list run:
-curl --header "Content-Type: application/json" --data '' --request GET http://<SN1 IP address>:28690/debug/blockchain_based_list/<block height> 2>/dev/null | python -mjson.tool
-
-
-SN should be present in  BBL:
+### Test #2 Unblocking SN disqualified by Type 1 criteria: 
+  > As a SN owner, I want to ensure my SN is not blocked from signing RTA Tx and added to BBList after unblocking
+  
+##|Steps| Excepted Result|
+------|------|-----------------|
+2.1| After  Test#1||
+2.2| Run SN: `./graftnoded --testnet --log-file /home/ubuntu/graft/GraftLog/` and wait for blockchain synchronization| In case of successful synchronization, you  can see on the screen information: `Synchronized OK`|
+2.3| Wait Block height= DisqExpiringBlock + 5||
+2.4| To check the appearance  of the  SN in BBL list run: `curl --header "Content-Type: application/json" --data '' --request GET http://<SN1 IP address>:28690/debug/blockchain_based_list/<block height> 2>/dev/null | python -mjson.tool`| SN should be present in  BBL:
 …
  {
  "Address": "<Wallet_public_address1>",
@@ -144,9 +124,13 @@ SN should be present in response - the SN List :
                 ""StakeFirstValidBlock"": 340001
             },
 ...
-Test #3
-Existence of disqualification Tx of Type 1 for disqualified SN:
-As an owner of the SN, I want to check availability of the DisqTx of Type 1 and ensure the number of signatures is equal to 8.
+### Test #3 Existence of disqualification Tx of Type 1 for disqualified SN
+  > As an owner of the SN, I want to check availability of the DisqTx of Type 1 and ensure the number of signatures is equal to 8.
+
+##|Steps| Excepted Result|
+------|------|-----------------|
+
+
 3.1
 Open tx by Graft Blockchain Explorer and search your disq.Tx by Tx hash (see p.1.4.1)
 
@@ -172,9 +156,14 @@ Check signatories
 
 
 Signatories must be 8
-Test #4
-Disqualification of a SN by Type2 criteria (lack of response from SN in Auth Sample):
-As an owner of 2 SNs, I want to make sure that my SNs are in the disqualification list (disqualification Type 2) and does not take part in the signing of RTA Tx (are not  in the BBL and AuthSample but present in the active SN list)
+
+### Test #4 Disqualification of a SN by Type2 criteria (lack of response from SN in Auth Sample)
+  > As an owner of 2 SNs, I want to make sure that my SNs are in the disqualification list (disqualification Type 2) and does not take part in the signing of RTA Tx (are not  in the BBL and AuthSample but present in the active SN list)
+
+##|Steps| Excepted Result|
+------|------|-----------------|
+
+
 4.1
 To check the presence  SNs in BBL list run:
 curl --header "Content-Type: application/json" --data '' --request GET http://<SN1 IP address>:28690/debug/blockchain_based_list/<block height> 2>/dev/null | python -mjson.tool
@@ -260,14 +249,15 @@ SN and SN2  should be present in response - the SN List :
                 ""StakeFirstValidBlock"": 340001
             },
 ...
-Test #5
-Unblocking SN disqualified by Type 2 criteria:
-As  SNs owner, I want to be sure that my 2 SNs unblocked for participation in signing Tx and added to BBList after Type 2 disqualification
+
+### Test #5 Unblocking SN disqualified by Type 2 criteria
+  > As  SNs owner, I want to be sure that my 2 SNs unblocked for participation in signing Tx and added to BBList after Type 2 disqualification
+
+##|Steps| Excepted Result|
+------|------|-----------------|
+
 5.1
 After  Test#4
-
-
-
 
 5.2
 Run SN1: 
@@ -376,65 +366,21 @@ SN and SN2  should be present in response - the SN List :
                 ""StakeFirstValidBlock"": 340001
             },
 ...
-Test #6
-Existence of disqualification Tx of Type 2 for disqualified SN:
-As an owner of the SNs, I want to check the availability of the DisqTx of Type 2 and  ensure the number of  signatories is equal to 6, and all 6 SN signed disqTx also signed the RTA Tx .
-6.1
-Open tx by Graft Blockchain Explorer and search your disq.Tx by disq Tx hash (see p.4.4.1)
+### Test #6 Existence of disqualification Tx of Type 2 for disqualified SN
+  > As an owner of the SNs, I want to check the availability of the DisqTx of Type 2 and  ensure the number of  signatories is equal to 6, and all 6 SN signed disqTx also signed the RTA Tx
+  
+##|Steps| Excepted Result|
+------|------|-----------------|
+6.1| Open tx by Graft Blockchain Explorer and search your disqualification Tx by disq Tx hash (see p.4.4.1)| Tx should be visible  in the Graft Blockchain Explorer|
+6.2| Check type of Tx| Tx must be disqualification|
+6.3| Check key images| Tx cannot contain any key images|
+6.4| Check mining fee| Tx should have zero mining fee|
+6.5| Check Disq SNs| Disq SNs should be 2: SN1 and SN2|
+6.6| Check signatures of disqTx| Disq Tx should be signed  by 6 SNs|
+6.7| Open tx by Graft Blockchain Explorer and search Tx by RTA Tx hash (see p.4.4.1)|Tx should be visible  in  Graft Blockchain Explorer
+6.8| Check type of Tx| Tx must be RTA|
+6.9| Check signatures of RTA Tx| RTA Tx should be signed  by 6 SNs and there are 6 SNs that signed disq.Tx|
 
-
-Tx should be visible  in  Graft Blockchain Explorer
-6.2
-Check type of Tx
-
-
-Tx must be disqualification
-6.3
-Check key images
-
-
-Tx can`t contain any key images
-6.4
-Check mining fee
-
-
-Tx should have zero mining fee
-6.5
-Check Disq SNs
-
-
-Disq SNs should be 2: SN1 and SN2
-6.6
-Check signatures of disqTx
-
-
-Disq Tx should be signed  by 6 SNs
-6.7
-Open tx by Graft Blockchain Explorer and search Tx by RTA Tx hash (see p.4.4.1)
-
-
-Tx should be visible  in  Graft Blockchain Explorer
-6.8
-Check type of Tx
-
-
-Tx must be RTA
-6.9
-Check signatures of RTA Tx
-
-
-RTA Tx should be signed  by 6 SNs and there are 6 SNs that signed disq.Tx
-Test #7
-Disqualification policy
-
-
-
-
-Test #8
-Unblocking  SN disqualified  by criteria of disqualification policy
-
-
-
-
-Test #9
-Participation of an active SN to Qualification Sample
+### Test #7 Disqualification policy
+### Test #8 Unblocking  SN disqualified  by criteria of disqualification policy
+### Test #9 Participation of an active SN to Qualification Sample
