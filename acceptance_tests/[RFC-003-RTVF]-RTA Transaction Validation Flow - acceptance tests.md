@@ -26,7 +26,7 @@
      - 1 wallet for Customer. The wallet should have amount >0 (for example, GRFT1000.00) for payment to merchant. 
      - 1 wallet for Merchant.
 
-#### Test Result description:
+### Test Result description:
 
 |||
 |--|---|
@@ -75,7 +75,7 @@
 
 ## Details
 
-### Supernode Staking
+### a) Supernode Staking
 
 ### Test#1: Verify SN synchronization
 
@@ -209,7 +209,7 @@ curl --header "Content-Type: application/json" --data '' --request GET http://18
 ```
 where:
 
-- `18.210.158.2` - IP address is not your Supernode
+- `18.210.158.2` - IP address (is not of your Supernode)
 
 **_Expected Result_**:
 
@@ -319,7 +319,7 @@ curl --header "Content-Type: application/json" --data '' --request GET http://18
 ```
 where:
 
-- `18.210.158.2` - IP address is not your Supernode
+- `18.210.158.2` - IP address of SN (is not of your Supernode)
 
 **_Expected Result_**:
 
@@ -421,7 +421,8 @@ where :
 curl --header "Content-Type: application/json" --data '' --request GET http://18.210.158.2:28690/debug/supernode_list/1 2>/dev/null | python -mjson.tool
 ```
 where:
-`18.210.158.2` - IP address is not your Supernode
+
+- `18.210.158.2` - IP address of SN (is not of your Supernode)
 
 **_Expected Result_**:
 
@@ -484,7 +485,7 @@ curl --request GET http://23.20.194.109:28690/debug/auth_sample/aabbccddeeff" 2>
 ```
 where :
 
-- `23.20.194.109` - IP address your SN
+- `23.20.194.109` - IP address of your SN
 
 **_Expected Result_**:
 
@@ -819,9 +820,9 @@ Error: stake transaction must be sent to a single destination
 
 10.2 Save parameters of  SN1 stake wallet: 
 
-10.2.1 Save stake wallet name1, address1 and password1
+10.2.1 Save **stake wallet name1**, **address1** and **password1**
 
-10.2.2 Run `seed` and save result:
+10.2.2 Run `seed` and save result
 
 **_Expected Result_**:
 
@@ -849,7 +850,7 @@ where:
 ```ruby
 kill  <supernode process number>
 ```
-10.6 Go to config.ini and enter address1 (p.10.2.1) as stake-wallet
+10.6 Go to `config.ini` and enter **address1** (p.10.2.1) as stake-wallet address
 
 10.7 Run supernode process with https://github.com/graft-project/graft-ng/wiki/Supernode-Install-&-Usage-Instruction#graft-supernode-configuration 
 
@@ -914,7 +915,7 @@ curl --header "Content-Type: application/json" --data '' --request GET http://18
 ```
 
 where:
-- `18.210.158.2 `- IP address is not your Supernode
+- `18.210.158.2 `- IP address of SN (is not of your Supernode)
 
 **_Expected Result_**:
 
@@ -966,7 +967,7 @@ curl --request GET http://23.20.194.109:28690/debug/auth_sample/aabbccddeeff" 2>
 
 where :
 
-- `23.20.194.109` - IP address your SN
+- `23.20.194.109` - IP address of your SN
 
 **_Expected Result_**:
 
@@ -1031,7 +1032,7 @@ curl --header "Content-Type: application/json" --data '' --request GET http://18
 
 where:
 
-- `18.210.158.2` - IP address is not your Supernode
+- `18.210.158.2` - IP address of SN (is not of your Supernode)
 
 **_Expected Result_**:
 
@@ -1060,7 +1061,7 @@ curl --header "Content-Type: application/json" --data '' --request GET http://23
 
 where :
 
-- `23.20.194.109` - IP address your SN
+- `23.20.194.109` - IP address of your SN
 - **bc height** - height of blockchain
 
 **_Expected Result_**:
@@ -1071,12 +1072,12 @@ SN2 is absent in the Blockchain Base List
 11.7 Run API to get Auth Sample List info:
 
 ```ruby
-curl --request GET http://23.20.194.109:28690/debug/auth_sample/aabbccddeeff" 2>/dev/null | python -mjson.tool
+curl --request GET http://23.20.194.110:28690/debug/auth_sample/aabbccddeeff" 2>/dev/null | python -mjson.tool
 ```
 
 where :
 
-- `23.20.194.109` - IP address your SN2
+- `23.20.194.110` - IP address of your SN2
 
 **_Expected Result_**:
 
@@ -1092,6 +1093,7 @@ SN2 is absent in the Auth Sample List
 
 **_Expected Result_**: 
 
+
 displayed info `Synchronization OK` 
  
 12.3 Wait 2 blocks (about 5 min)
@@ -1104,7 +1106,7 @@ curl --header "Content-Type: application/json" --data '' --request GET http://18
 
 where:
 
-- `18.210.158.2` - IP address is not your Supernode
+- `18.210.158.2` - IP address of SN (is not of your Supernode)
 
 **_Expected Result_**:
 
@@ -1133,7 +1135,7 @@ curl --header "Content-Type: application/json" --data '' --request GET http://23
 
 where :
 
-- `23.20.194.109` - IP address your SN
+- `23.20.194.109` - IP address of your SN
 - **bc height** - height of blockchain
 
 **_Expected Result_**:
@@ -1195,7 +1197,7 @@ where :
 transfer_rta <wallet address> 10
 ```
 
-Where:
+where:
 
 - **wallet address** - recipient's  address
 
@@ -1211,7 +1213,7 @@ Spending from address index 0
 Sending 10.0000000000.  The transaction fee is 1.0000000000
 Is this okay?  (Y/Yes/N/No):
 ```
-and stop on this step
+and stop at this step
 
 13.4  In another window of this instance kill supernode process:
 
@@ -1274,7 +1276,7 @@ Error: locked blocks number 1 is less than minimum required 60
 
 
 
-### RTA Tx Flow
+### b) RTA Tx Flow
 
 Calculation example: https://docs.google.com/spreadsheets/d/1Trcrko854IvxZ2sE_MwLa6M8ut-xwByujAP-NLwDmgM/edit#gid=0
 
@@ -1292,7 +1294,7 @@ Calculation example: https://docs.google.com/spreadsheets/d/1Trcrko854IvxZ2sE_Mw
 
 15.1 Order good with price GRFT10 (or enter  GRFT10 in the sale functionality)
 
-15.2 Press “Sale” button (or enter)
+15.2 Press `Sale` button (or enter)
 
 **_Expected Result_**:
 
