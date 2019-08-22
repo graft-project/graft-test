@@ -411,7 +411,7 @@ where :
 
 ### Test#5 Continue Stake with T1 funds after expired Stake with T2
 
-5.1 After Test#3
+5.1 After Test#4
 
 5.2 Wait 60 blocks
 
@@ -423,7 +423,7 @@ curl --header "Content-Type: application/json" --data '' --request GET http://18
 where:
 `18.210.158.2` - IP address is not your Supernode
 
-**_Expected Result:_**:
+**_Expected Result_**:
 
 ```ruby
 …
@@ -454,6 +454,7 @@ where:
             },
 …
 ```
+
 5.4 Run API to get Blockchain Base List (BBL) info:
 
 ```ruby
