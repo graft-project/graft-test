@@ -189,7 +189,7 @@ curl --header "Content-Type: application/json" --data '' --request GET http://18
 ```
 where:
 
-	`18.210.158.2` - IP address is not your Supernode
+`18.210.158.2` - IP address is not your Supernode
 
 **_Expected Result_**:
 ```ruby
@@ -263,19 +263,22 @@ where :
 #### Test#4 Stake Transaction with extra  funds (enough for T2) 
 
 4.1 After Test#3
+
 4.2. Send New Stake Transaction with amount GRFT40001 and stake period = 60
+
 ```ruby
 stake_transfer <stake_wallet_address_1> 40001 60  <Supernode_public_ID_key_1> <SuperNode_Signature_1>
 ```
 **_Expected Result_**:
+
 ```ruby
 Transaction successfully submitted, transaction <4dcf1...>
 You can check its status by using the `show_transfers` command.
 ```
 4.3  Run `balance` command and save result
 
-**_Expected Result_**:
-(for example)
+**_Expected Result_** (for example):
+
 ```ruby
 Balance: 150007.2131303450, unlocked balance: 50005.2131303450
 ```
@@ -285,10 +288,11 @@ Balance: 150007.2131303450, unlocked balance: 50005.2131303450
 ```ruby
 curl --header "Content-Type: application/json" --data '' --request GET http://18.210.158.2:28690/debug/supernode_list/1 2>/dev/null | python -mjson.tool
 ```
-	where:
-	`18.210.158.2` - IP address is not your Supernode
+where:
+`18.210.158.2` - IP address is not your Supernode
 
 **_Expected Result_**:
+
 ```ruby
 …
 {
@@ -332,14 +336,16 @@ curl --header "Content-Type: application/json" --data '' --request GET http://18
 …
 ```
 4.6 Run API to get Blockchain Base List (BBL) info:
+
 ```ruby
 curl --header "Content-Type: application/json" --data '' --request GET http://23.20.194.109:28690/debug/blockchain_based_list/<bc height> 2>/dev/null | python -mjson.tool
 ```
 where :
+
 `23.20.194.109` - IP address of your SN
 **bc height** - height of blockchain
 
-**_Expected Result:
+**_Expected Result_**:
 ```ruby
 …
 {
@@ -350,11 +356,13 @@ where :
 …
 ```
 4.7 Run API to get Auth Sample List info:
+
 ```ruby
 curl --request GET http://23.20.194.109:28690/debug/auth_sample/aabbccddeeff" 2>/dev/null | python -mjson.tool
 ```
 where :
-23.20.194.109 - IP address of your SN
+
+`23.20.194.109` - IP address of your SN
 
 **_Expected Result_**:
 ```ruby
@@ -366,20 +374,23 @@ where :
                 "StakeAmount": 900020000000000
             },
 ```
+
 #### Test#5 Continue Stake with T1 funds after expired Stake with T2
 
 5.1 After Test#3
 
 5.2 Wait 60 blocks
 
-5.3 Run API to get SN List info
+5.3 Run API to get SN List info:
+
 ```ruby
 curl --header "Content-Type: application/json" --data '' --request GET http://18.210.158.2:28690/debug/supernode_list/1 2>/dev/null | python -mjson.tool
 ```
-	where:
-	`18.210.158.2` - IP address is not your Supernode
+where:
+`18.210.158.2` - IP address is not your Supernode
 
-**_Expected Result:_**
+**_Expected Result:_**:
+
 ```ruby
 …
 {
@@ -410,6 +421,7 @@ curl --header "Content-Type: application/json" --data '' --request GET http://18
 …
 ```
 5.4 Run API to get Blockchain Base List (BBL) info:
+
 ```ruby
 curl --header "Content-Type: application/json" --data '' --request GET http://23.20.194.109:28690/debug/blockchain_based_list/<bc height> 2>/dev/null | python -mjson.tool
 ```
@@ -417,7 +429,8 @@ where :
 `23.20.194.109` - IP address of your SN
 **bc height** - height of blockchain
 
-**_Expected Result:_**
+**_Expected Result_**:
+
 ```ruby
 …
 {
@@ -428,13 +441,15 @@ where :
 …
 ```
 5.5 Run API to get Auth Sample List info:
+
 ```ruby
 curl --request GET http://23.20.194.109:28690/debug/auth_sample/aabbccddeeff" 2>/dev/null | python -mjson.tool
 ```
 where :
+
 `23.20.194.109` - IP address your SN
 
-**_Expected Result:_**
+**_Expected Result_**:
 ```ruby
 {
                 "Address": ""F6qk6a..."",
@@ -444,8 +459,8 @@ where :
                 "StakeAmount": 500010000000000
             },
  ```
+ 
 #### Test#6 SN receives locked amount after expired Stake with T2
-
 
 6.1 After Test#5
 
@@ -454,10 +469,12 @@ where :
 ./graft-wallet-cli --wallet-file SN1 \--password "" --testnet --trusted-daemon --daemon-address localhost:28681
 ```
 where :
-**SN1** - Wallet_name - name of your wallet, which you opened for this SN
-**SN1_testpsw -Wallet_Psw** - psw to your wallet, which you opened for this SN (in our case is empty)
+
+- **SN1** - Wallet_name - name of your wallet, which you opened for this SN
+- **SN1_testpsw -Wallet_Psw** - psw to your wallet, which you opened for this SN (in our case is empty)
 
 **_Expected Result:_** (for example):
+
 ```ruby
 Balance: 150007.2131303450, unlocked balance: 50005.2131303450
 Refresh done, blocks received: 185634
@@ -466,7 +483,6 @@ Tag: (No tag assigned)
 [wallet F6qk6a]:
 ```
 
-
 6.3 Run `balance` command and check  wallet amount with saved result from Test#4
 
 **_Expected Result:_**:
@@ -474,6 +490,7 @@ Tag: (No tag assigned)
 Stake amount (40001 - Mining Reward) should be returned to the stake wallet
 
 _(for example)_
+
 Test#4:
 ```ruby
 Balance: 150007.2131303450, unlocked balance: 50005.2131303450
