@@ -83,7 +83,7 @@
 
 1.2. Synchronize SN with : https://github.com/graft-project/graft-ng/wiki/Supernode-Install-&-Usage-Instruction#graft-supernode-configuration
 
-**_Expected Result_**: displayed info Synchronization OK 
+**_Expected Result_**: displayed info `Synchronization OK `
 
 1.3. Run stake wallet:
 ```ruby
@@ -94,7 +94,7 @@ where :
 
 - **SN1_testpsw -Wallet_Psw** - psw to your wallet, which you opened for this SN (in our case is empty)
 
-**_Expected Result _**(for example):
+**_Expected Result_**(for example):
 ```ruby
 Balance: 299999.9856666400, unlocked balance: 299999.9856666400 
 Refresh done, blocks received: 185634 
@@ -117,30 +117,31 @@ curl --request GET http://localhost:28690/dapi/v2.0/cryptonode/getwalletaddress
 "signature":"45f78cd..."}
 ```
 2.2 Save info:
-**wallet_public_address** - as a stake_wallet_address_1
-**Id_key** - as a Supernode_public_ID_key_1
-**Signature** - as a SuperNode_Signature_1
+- **wallet_public_address** - as a stake_wallet_address_1
+- **Id_key** - as a Supernode_public_ID_key_1
+- **Signature** - as a SuperNode_Signature_1
 
 2.3 Run wallet :
 ```ruby
 ./graft-wallet-cli --wallet-file SN1 \--password "" --testnet --trusted-daemon --daemon-address localhost:28681
 ```
 where :
-**SN1** - Wallet_name - name of your wallet, which you opened for this SN
-**SN1_testpsw -Wallet_Psw** - psw to your wallet, which you opened for this SN (in our case is empty)
+
+- **SN1** - Wallet_name - name of your wallet, which you opened for this SN
+- **SN1_testpsw -Wallet_Psw** - psw to your wallet, which you opened for this SN (in our case is empty)
 
 2.4 Send Stake transaction with amount = GRFT40000 and stake period = 5000
 ```ruby
 stake_transfer <stake_wallet_address_1> 40000 5000 <Supernode_public_ID_key_1> <SuperNode_Signature_1>
 ```
-**_Expected Result-**:
+**_Expected Result_**:
 ```ruby
-...
+…
 Stake amount 40000.000000 is less than the minimum supernode stake 50000.000000; are you sure you want to submit this partial stake? (Y/Yes/N/No): 
 ```
-Enter  Y
+Enter  `Y`
 ```ruby
-...
+…
 Transaction successfully submitted, transaction <1fb70...>
 You can check its status by using the `show_transfers` command.
 ```
@@ -165,16 +166,17 @@ curl --header "Content-Type: application/json" --data '' --request GET http://18
                   "StakeExpiringBlock": 316217,
                 "StakeFirstValidBlock": 311218
 }
-...
+…
 ```
 #### Test#3 Stake Transaction  with exact T1 funds 
 
 3.1. After Test#2
+
 3.2. Send New Stake Transaction with amount GRFT10001 and stake period = 5000
 ```ruby
 stake_transfer <stake_wallet_address_1> 10001 5000  <Supernode_public_ID_key_1> <SuperNode_Signature_1>
 ```
-Expected Result:
+**_Expected Result_**:
 ```ruby
 Transaction successfully submitted, transaction <3fd81...>
 You can check its status by using the `show_transfers` command.
@@ -186,9 +188,10 @@ You can check its status by using the `show_transfers` command.
 curl --header "Content-Type: application/json" --data '' --request GET http://18.210.158.2:28690/debug/supernode_list/1 2>/dev/null | python -mjson.tool
 ```
 where:
+
 	`18.210.158.2` - IP address is not your Supernode
 
-**_Expected Result:
+**_Expected Result_**:
 ```ruby
 …
 {
@@ -203,7 +206,7 @@ where:
               "StakeExpiringBlock": 316210,
                 "StakeFirstValidBlock": 311211
 }
-...
+…
 {
                 "Address":""F6qk6a..."",
                 "AuthSampleBlockchainBasedListTier": 1,
@@ -223,10 +226,11 @@ where:
 curl --header "Content-Type: application/json" --data '' --request GET http://23.20.194.109:28690/debug/blockchain_based_list/<bc height> 2>/dev/null | python -mjson.tool
 ```
 where :
+
 `23.20.194.109` - IP address of your SN
 **bc height** - height of blockchain
 
-**_Expected Result:
+**_Expected Result_**:
 ```ruby
 …
 {
@@ -234,7 +238,7 @@ where :
                    "PublicId": ""4014fcfb…."",
                    "StakeAmount": 500010000000000
                },
-...
+…
 ```
 
 3.6 Run API to get Auth Sample List info:
@@ -242,9 +246,10 @@ where :
 curl --request GET http://23.20.194.109:28690/debug/auth_sample/aabbccddeeff" 2>/dev/null | python -mjson.tool
 ```
 where :
+
 `23.20.194.109` - IP address of your SN
 
-**_Expected Result:
+**_Expected Result_**:
 ```ruby
 {
                 "Address": ""F6qk6a..."",
@@ -298,7 +303,7 @@ curl --header "Content-Type: application/json" --data '' --request GET http://18
                ""StakeExpiringBlock"": 311270
                ""StakeFirstValidBlock"": 311210
 }
-...
+…
 {
                 "Address":""F6qk6a..."",
                 "AuthSampleBlockchainBasedListTier": 1,
@@ -342,7 +347,7 @@ where :
                    "PublicId": ""4014fcfb…."",
                    "StakeAmount": 900020000000000
                },
-...
+…
 ```
 4.7 Run API to get Auth Sample List info:
 ```ruby
@@ -389,7 +394,7 @@ curl --header "Content-Type: application/json" --data '' --request GET http://18
                ""StakeExpiringBlock"": 311270
                ""StakeFirstValidBlock"": 311210
 }
-...
+…
 {
                 "Address":""F6qk6a..."",
                 "AuthSampleBlockchainBasedListTier": 1,
@@ -420,7 +425,7 @@ where :
                    "PublicId": ""4014fcfb…."",
                    "StakeAmount": 500010000000000
                },
-...
+…
 ```
 5.5 Run API to get Auth Sample List info:
 ```ruby
@@ -514,7 +519,7 @@ where:
               "StakeExpiringBlock": 316210,
                 "StakeFirstValidBlock": 311211
 }
-...
+…
 {
                 "Address":""F6qk6a..."",
                 "AuthSampleBlockchainBasedListTier": 1,
@@ -558,7 +563,7 @@ where :
                    "PublicId": ""4014fcfb…."",
                    "StakeAmount": 1500020000000000
                },
-...
+…
 ```
 7.6 Run API to get Auth Sample List info:
 ```ruby
@@ -615,7 +620,7 @@ where:
               "StakeExpiringBlock": 316210,
                 "StakeFirstValidBlock": 311211
 }
-...
+…
 {
                 "Address":""F6qk6a..."",
                 "AuthSampleBlockchainBasedListTier": 1,
@@ -673,7 +678,7 @@ where :
                    "PublicId": ""4014fcfb…."",
                    "StakeAmount": 2500030000000000
                },
-...
+…
 ```
 8.6 Run API to get Auth Sample List info:
 ```ruby
@@ -760,17 +765,17 @@ curl --request GET http://localhost:28690/dapi/v2.0/cryptonode/getwalletaddress
 ```
 10.9 Save info:
 
-**wallet_public_address** - should be a stake_wallet_address_1
-**Id_key** - as a Supernode_public_ID_key_2
-**Signature** - as a SuperNode_Signature_2
+- **wallet_public_address** - should be a stake_wallet_address_1
+- **Id_key** - as a Supernode_public_ID_key_2
+- **Signature** - as a SuperNode_Signature_2
 
 10.10 Run wallet :
 ```ruby
 ./graft-wallet-cli --wallet-file SN1 \--password "" --testnet --trusted-daemon --daemon-address localhost:28681
 ```
 where :
-**SN1** - Wallet_name - name of your wallet, which you opened for this SN
-**SN1_testpsw -Wallet_Psw** - psw to your wallet, which you opened for this SN (in our case is empty)
+- **SN1** - Wallet_name - name of your wallet, which you opened for this SN
+- **SN1_testpsw -Wallet_Psw** - psw to your wallet, which you opened for this SN (in our case is empty)
 
 10.11 Send Stake transaction with amount = GRFT50001 and stake period = 5000
 ```ruby
@@ -811,7 +816,7 @@ where:
               "StakeExpiringBlock": 316210,
                 "StakeFirstValidBlock": 311211
 }
-...
+…
 ```
 
 10.15 Run API to get Blockchain Base List (BBL) info:
@@ -830,7 +835,7 @@ where :
                    "PublicId": ""5014fcfb…."",
                    "StakeAmount": 500010000000000
                },
-...
+…
 ```
 
 10.16 Run API to get Auth Sample List info:
@@ -909,7 +914,7 @@ where:
               "StakeExpiringBlock": 316210,
                 "StakeFirstValidBlock": 311211
 }
-...
+…
 ```
 
 11.6 Run API to get Blockchain Base List (BBL) info:
@@ -969,7 +974,7 @@ where:
               "StakeExpiringBlock": 316210,
                 "StakeFirstValidBlock": 311211
 }
-...
+…
 ```
 12.5 Run API to get Blockchain Base List (BBL) info:
 ```ruby
@@ -987,7 +992,7 @@ where :
                    "PublicId": ""5014fcfb…."",
                    "StakeAmount": 500010000000000
                },
-...
+…
 ```
 12.6 Run API to get Auth Sample List info:
 ```ruby
@@ -1200,11 +1205,11 @@ Error:
 ```
 #### Test#22 Failed RTA Transaction transfer due to non-receipt of response at the scheduled time
 
-Note: Before this test you should have 8 SNs in a stake 
+> Note: Before this test you should have 8 SNs in a stake 
 
 22.1 Repeat Test#15 
 
-22.2 Wait 2? blocks (about 15 min)
+22.2 Wait 7 blocks (about 15 min)
 
 **_Expected Result:_**:
 ```ruby
