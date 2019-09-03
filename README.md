@@ -43,6 +43,6 @@ GRAFT 2/2 Multisig Light Wallet acceptance tests are located in https://github.c
 
 [ToDo]:  GRAFT 2/2 Multisig Light Wallet acceptance tests validate work of the GRAFT Network  in accordance with the design described in https://github.com/graft-project/DesignDocuments/blob/master/RFCs/%5BRFC-006-GMLW%5D%20GRAFT%20Multisig%20Light%20Wallet.md
  
-## Writing new Graft tests
+# Writing new Graft tests
 
 When writing new autotests, please implement all functions in .cpp or .c files, and only put function headers in .h files. This will help keep the fairly complex test suites somewhat sane going forward.
